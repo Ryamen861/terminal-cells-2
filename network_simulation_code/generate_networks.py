@@ -206,9 +206,11 @@ def stretch(G, alpha):
 
     return G
 
+# 2 initalization functions are below (initalize_line and initialize_tri)
 def initialize_line(initial_length, elen):
 
     G = nx.Graph()
+    
     G.add_node(0, coords=np.array((0, 0)), angle=np.pi, level = 0)
     G.add_node(1, coords=np.array((elen, 0)), angle=0, level = 0)
     G.add_edge(0, 1, level=0, length=elen)
