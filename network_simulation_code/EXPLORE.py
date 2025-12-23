@@ -14,7 +14,10 @@ elen = 1
 # G.add_edge(0, 1, level=0, length=elen)
 
 
-G = gn.initialize_tri(1, elen)
-# G = gn.initialize_line(1, elen)
+# G = gn.initialize_tri(1, elen) # 
+G = gn.initialize_line(2, elen)
 
 nx.draw_spring(G, with_labels=True)
+
+for i in G.edges(data=True):
+    print(i)

@@ -41,15 +41,15 @@ def new_edge(G, n, elen, lev, point_tree, override = False):
     success = True
     # check for overlaps with other edges -- if so, new addition was unsuccessful
 
-    # find all nodes withing a radius r of m
+    # find all nodes within a radius r of m
     neibs = point_tree.query_ball_point(G.nodes[m]['coords'], 2*elen)
 
     # check that the new edge (n, m) does not overlap with any existing edges
     for n1 in neibs:
         for n2 in list(G.neighbors(n1)):
 
-            A = G.nodes[n]['coords']
-            B = G.nodes[m]['coords']
+            A = G.nodes[n]['coords'] # coords of the previously terminal node
+            B = G.nodes[m]['coords'] # coords of the new node we will add
 
             if n1 not in [n, m] and n2 not in [n, m]:
                 C = G.nodes[n1]['coords']
@@ -208,22 +208,34 @@ def stretch(G, alpha):
 
 # 2 initalization functions are below (initalize_line and initialize_tri)
 def initialize_line(initial_length, elen):
+    '''Starts a graph with initial_length number of nodes, excluding the root
+    
+    
+    '''
 
+    # start new graph
     G = nx.Graph()
     
+    # make two nodes and connect them with an edge
     G.add_node(0, coords=np.array((0, 0)), angle=np.pi, level = 0)
     G.add_node(1, coords=np.array((elen, 0)), angle=0, level = 0)
     G.add_edge(0, 1, level=0, length=elen)
 
     i = 1
+    
+    # add new nodes until we have reached the desired length
     while i < initial_length:
-        alpha = uniform(-np.pi / 64, np.pi / 64)
+        alpha = uniform(-np.pi / 64, np.pi / 64) # small random deviation
 
         m = G.number_of_nodes()
-        beta = G.nodes[i]['angle']
+        # the number of nodes is the number the new node will take on, since we start from 0
+        
+        beta = G.nodes[i]['angle'] # get the angle of the "terminal" node
 
         angle = beta + alpha
+        # the small random deviation added with the previous node's angle makes the angle fo the new node
 
+        # create and connect the node with parameters made above
         G.add_node(m, angle=angle, level = 0)
         G.nodes[m]['coords'] = (G.nodes[i]['coords'][0] + elen * np.cos(angle),
                                 G.nodes[i]['coords'][1] + elen * np.sin(angle))
@@ -240,14 +252,17 @@ def initialize_tri(initial_length, elen):
     G.add_node(0, coords=np.array((0, 0)), angle=np.pi, level = 0)
 
     for i in [1, 2, 3]:
-        ang = np.pi/6 + (i-1)*2*np.pi/3
+        ang = np.pi/6 + (i-1)*2*np.pi/3 # think tilted mercedes benz symbol on unit circle
+        
+        # add a node at tips of mercedes benz star symbol
         G.add_node(i, coords=elen*np.array((np.cos(ang), np.sin(ang))), angle=ang, level = 0)
         G.add_edge(0, i, level=0, length=elen)
 
     i = 1
     while i < initial_length:
-        alpha = uniform(-np.pi / 32, np.pi / 32)
-
+        alpha = uniform(-np.pi / 32, np.pi / 32) # larger range for deviation than initialize_line
+        
+        # rest is very similar to initialize_line
         m = G.number_of_nodes()
         beta = G.nodes[i]['angle']
 
@@ -281,6 +296,7 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
 
     level_num = 0
 
+    # initialize a graph of a type depending on init
     if init == 'tri':
         G = initialize_tri(initial_len, elen)
     elif init == 'line':
@@ -290,7 +306,9 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
 
     print('initial condition has', G.number_of_nodes(), 'nodes')
 
-
+    # in the paper, section labeled "Scaling Laws for Asymptotic Growth Regimes"
+    # outlines L, Rv (abbrev as R in this code), and A as important variables 
+    # that can be modeled as:        L ~ A^a and Rv ~ A^b
     intermediate_Ls = []
     intermediate_As = []
     intermediate_Rs = []
@@ -303,6 +321,7 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
     keep_adding = True
 
     while G.number_of_nodes() <= max_size and keep_adding:
+        # this while loop branches/extends the graph until it has reached max size
 
         #f = 0.75
         # box_lims = [0, W, -20 - (1-f)*0.1*step, 20 + f*0.1*num]
@@ -325,6 +344,7 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
 
 
         point_tree = spatial.cKDTree(list(nx.get_node_attributes(G, 'coords').values()))
+        # later used to find points within a distance of a node
 
         if stretch_factor > 0:
             G = stretch(G, 1 + stretch_factor)
@@ -340,6 +360,8 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
 
         cands1 = [n for n in G.nodes() if G.degree(n) == 1]
         cands2 = [n for n in G.nodes() if G.degree(n) == 2]
+        # if the degree is greater than 3, we should not add more to it.
+        # Else, it is no longer a binary tree
 
         #degree_tuples = G.degree()
 
@@ -350,7 +372,7 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
 
         # option to not let new branches form at the base
         if right_side_only:
-            cands1.remove(0)
+            cands1.remove(0) # gets rid of node 0, the root node
 
         # go through list of candidate docks until one that fits all
         # docking criteria is found (density and line density requirements)
@@ -361,14 +383,18 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
             if random() < branch_probability and len(cands2) > 0:
                 dock = cands2.pop()
                 G, edge_added = new_edge(G, dock, elen, level_num, point_tree)
+                # in this case, we would be branching
             elif len(cands1) > 0:
                 dock = cands1.pop()
                 G, edge_added = new_edge(G, dock, elen, level_num, point_tree)
+                # this case would be extending
             else:
                 print("no more spaces, network stopped at", G.number_of_nodes(),
                           "nodes, but should have", max_size, "nodes")
                 keep_adding = False
                 break
+            
+            color_plot_walk(G)
 
         # frame = 50
         # if level_num % frame == 1:
@@ -579,46 +605,97 @@ def plot_walk(G, sensitivity_radius, max_occupancy, latency_dist, savename, dlim
 
     #nx.write_gpickle(G, savename + "_saved.gpickle")
 
+# the following function was copied over from test_trees.py and modified
+def color_plot_walk(G):
 
+    fig, ax = plt.subplots(figsize=(2, 2))
 
-def color_plot_walk(G, savename, special = 0):
+    maxLevel = max(nx.get_edge_attributes(G, 'level').values()) + 1
 
-    fig, ax = plt.subplots(figsize=(4, 4))
+    # print('max level:', maxLevel)
 
-    palette = sns.dark_palette("red", G.number_of_nodes(), reverse=True)
+    palette = sns.dark_palette("red", maxLevel, reverse=True)
 
     for e in G.edges(data=True):
-
-        #print(e, e[2]['level'])
-
+        # e is a tuple that looks like this:
+        # (node_connected_by_edge, other_node_connected_by_edge, dict_of_attributes)
+        # the dictionary holds level, length, and ange information
+        
+        # find the coordinates of the two nodes connected by this edge
         c0 = G.nodes[e[0]]['coords']
         c1 = G.nodes[e[1]]['coords']
 
-
+        # the level gives index for RGB value
         c = palette[e[2]['level']]
-        #c = 'k'
-
         if e[2]['level'] == 0:
+            # if the level is zero, then make it blue
+            # reminder: nodes of level zero are ones made in the initialization
              c = 'b'
-            
-        c = 'k'
 
         plt.plot([c0[0], c1[0]], [c0[1], c1[1]], color=c, linewidth = .5)
 
-    # m = G.number_of_nodes() - 1
-    # c0 = G.nodes[m]['coords']
-    # plt.scatter(c0[0], c0[1], color = 'k')
-    # 
-    # if special > 0:
-    #     c0 = G.nodes[special]['coords']
-    #     plt.scatter(c0[0], c0[1], color='b')
-    # 
-    # print(list(G.neighbors(m)))
-
-    plt.xlim(-180, 380)
-    plt.ylim(-280, 280)
-
     #plt.axis('equal')
+    #plt.axis('off')
 
-    plt.savefig(savename + '.pdf', bbox_inches='tight', dpi=300)
+    coords = np.array([i[:2] for i in nx.get_node_attributes(G, 'coords').values()])
+    xs = coords[:, 0]
+    ys = coords[:, 1]
+
+    xcent = 0.5*(np.max(xs) + np.min(xs))
+    ycent = 0.5*(np.max(ys) + np.min(ys))
+
+    # print(xcent, ycent)
+
+    lim = 120
+
+    plt.axis([xcent - lim, xcent + lim, ycent - lim, ycent + lim])
+    plt.gca().set_aspect('equal', adjustable='box')
+    plt.axis('off')
+    
+    file_name = f'Ryan_tests/frame_{G.number_of_nodes():d}'
+    fig.savefig(file_name, dpi=300, bbox_inches='tight')
+
     plt.close()
+
+
+# def color_plot_walk(G, savename, special = 0):
+
+#     fig, ax = plt.subplots(figsize=(4, 4))
+
+#     palette = sns.dark_palette("red", G.number_of_nodes(), reverse=True)
+
+#     for e in G.edges(data=True):
+
+#         #print(e, e[2]['level'])
+
+#         c0 = G.nodes[e[0]]['coords']
+#         c1 = G.nodes[e[1]]['coords']
+
+
+#         c = palette[e[2]['level']]
+#         #c = 'k'
+
+#         if e[2]['level'] == 0:
+#              c = 'b'
+            
+#         c = 'k'
+
+#         plt.plot([c0[0], c1[0]], [c0[1], c1[1]], color=c, linewidth = .5)
+
+#     # m = G.number_of_nodes() - 1
+#     # c0 = G.nodes[m]['coords']
+#     # plt.scatter(c0[0], c0[1], color = 'k')
+#     # 
+#     # if special > 0:
+#     #     c0 = G.nodes[special]['coords']
+#     #     plt.scatter(c0[0], c0[1], color='b')
+#     # 
+#     # print(list(G.neighbors(m)))
+
+#     plt.xlim(-180, 380)
+#     plt.ylim(-280, 280)
+
+#     #plt.axis('equal')
+
+#     plt.savefig(savename + '.pdf', bbox_inches='tight', dpi=300)
+#     plt.close()

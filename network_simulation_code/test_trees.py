@@ -6,6 +6,7 @@ import pickle
 import pandas as pd
 import time
 import seaborn as sns
+import ffmpeg
 
 from generate_networks import BSARW
 from helpers import get_coarsened_edge_lengths, compute_void, total_edge_length, get_num_coarsened_edges
@@ -21,17 +22,20 @@ def color_plot_walk(G, savename):
     palette = sns.dark_palette("red", maxLevel, reverse=True)
 
     for e in G.edges(data=True):
-
-        #print(e, e[2]['level'])
-
+        # e is a tuple that looks like this:
+        # (node_connected_by_edge, other_node_connected_by_edge, dict_of_attributes)
+        # the dictionary holds level, length, and ange information
+        
+        # find the coordinates of the two nodes connected by this edge
         c0 = G.nodes[e[0]]['coords']
         c1 = G.nodes[e[1]]['coords']
 
+        # the level gives index for RGB value
         c = palette[e[2]['level']]
         if e[2]['level'] == 0:
+            # if the level is zero, then make it blue
+            # reminder: nodes of level zero are ones made in the initialization
              c = 'b'
-
-        #c = 'k'
 
         plt.plot([c0[0], c1[0]], [c0[1], c1[1]], color=c, linewidth = .5)
 
@@ -72,7 +76,7 @@ all_As = []
 all_Ls = []
 
 
-reps = 3
+reps = 1
 
 size_distribution = np.random.normal(800, 200, reps)
 
@@ -80,28 +84,32 @@ size_distribution = np.random.normal(800, 200, reps)
 size = 1000
 
 
-b = .5
-s = 1.001
+# b = .5
+# s = 1.001
 
-b = 0.1
-s = 1.0007
+# b = 0.1
+# s = 1.0007
 
-b = 0.007
-s = 1.0002
+# b = 0.007
+# s = 1.0002
 
 # b = 0.007
 # s = 1.0001
 
-s = 0.001
-b = 0.02
+# s = 0.001
+# b = 0.02
 
 s = 0.0007
 b = 0.055
 
-s = 0.0001
-b = 0.0001
+# s = 0.0001
+# b = 0.0001
 
 print('s:', s, 'b:', b)
+
+
+# video variables
+frame_rate = 24
 
 for rep in range(reps):
 
@@ -110,7 +118,20 @@ for rep in range(reps):
     G = BSARW(size, elen, branch_probability = b, stretch_factor = s,
                        initial_len = 30, init = 'line', right_side_only = True)
 
-    savename = 'networks/N_' + str(size) + '_s_' + str(s) + '_b_' + str(b) + '_' + str(rep)
+    savename = 'Ryan_tests/N_' + str(size) + '_s_' + str(s) + '_b_' + str(b) + '_' + str(rep)
+    
+    #### Turn video frames into video
+    video_filename = f'Ryan_video/simulation_{size}_{s}_{b}.mp4'
+    
+    ffmpeg\
+        .input('Ryan_tests/frame_%d.png', start_number=32)\
+        .output(video_filename,
+                vcodec='mpeg4',
+                r=str(frame_rate),
+                video_bitrate='8000k')\
+        .run(overwrite_output=False)
+        
+    ####
 
     B = get_num_coarsened_edges(G)
     print('number of branches:', B)
