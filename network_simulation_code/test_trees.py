@@ -121,10 +121,10 @@ for rep in range(reps):
     savename = 'Ryan_tests/N_' + str(size) + '_s_' + str(s) + '_b_' + str(b) + '_' + str(rep)
     
     #### Turn video frames into video
-    video_filename = f'Ryan_video/simulation_{size}_{s}_{b}.mp4'
+    video_filename = f'Video/simulation_{size}_{s}_{b}.mp4'
     
     ffmpeg\
-        .input('Ryan_tests/frame_%d.png', start_number=32)\
+        .input('frames/frame_%d.png', start_number=32)\
         .output(video_filename,
                 vcodec='mpeg4',
                 r=str(frame_rate),

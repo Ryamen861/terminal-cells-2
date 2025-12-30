@@ -2,26 +2,117 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 import sys
-import math
 from random import uniform, shuffle, random, choice
 import scipy.spatial as spatial
 from matplotlib import patches
 from helpers import total_edge_length, convex_hull_area, compute_void, number_of_branches, partial_line
 import seaborn as sns
+import scipy as sci
 
-# intersection helper
-def ccw(A, B, C):
-    return (C[1] - A[1]) * (B[0] - A[0]) > (B[1] - A[1]) * (C[0] - A[0])
+# constants
+PHI_BOUND = np.pi / 128
+EPSILON = sys.float_info.epsilon
 
-# return true if line segments AB and CD intersect
-def intersect(A, B, C, D):
-    return ccw(A, C, D) != ccw(B, C, D) and ccw(A, B, C) != ccw(A, B, D)
+# below are 2D intersection finders
+# # intersection helper
+# def ccw(A, B, C):
+#     return (C[1] - A[1]) * (B[0] - A[0]) > (B[1] - A[1]) * (C[0] - A[0])
 
+# # return true if line segments AB and CD intersect
+# def intersect(A, B, C, D):
+#     return ccw(A, C, D) != ccw(B, C, D) and ccw(A, B, C) != ccw(A, B, D)
+
+def find_domain(initial_pt, terminal_pt, elen):
+    '''Returns the domain of parametrization using magnitude restraints [0, elen].
+    initial_pt is just the coordinates of the previous node.
+    terminal_pt is just the coordinates of the new node.'''
+
+    is_bound = True
+    # note regarding is_bound:
+    # I was thinking that " - elen " would give the upper bound, but it doesn't
+    # always. So I just find both and sort them at the end
+    def magnitude_function(t):
+        slope_vector = np.array(terminal_pt) - np.array(initial_pt)
+        
+        if is_bound:
+            return np.linalg.norm(slope_vector * t + initial_pt) - elen
+        else:
+            return np.linalg.norm(slope_vector * t + initial_pt)
+        
+    sol = sci.optimize.root(magnitude_function, x0=5)
+    upper_bound_t = sol.x[0]
+    
+    is_bound = False
+    sol = sci.optimize.root(magnitude_function, x0=5)
+    lower_bound_t = sol.x[0]
+    
+    bounds = [lower_bound_t, upper_bound_t]
+    bounds.sort()
+    
+    return tuple(bounds)
+
+def intersect(A, B, C, D, elen):
+    '''Returns a bool for whether or not two branches intersect.
+    Uses vector parametrization over a domain, which is also calculated here.'''
+
+    # p(t) = vector(AB) * t + A is the parametrization format
+    # q(s) = vector(CD) * s + C
+    
+    does_intersect = None
+    
+    # find domain of t and s
+    t_bounds = find_domain(A, B, elen)
+    s_bounds = find_domain(C, D, elen)
+    
+    # find solution to system of 3 equations ( p(t) = q(s), but with x, y, z components )
+    
+    # two slope vectors
+    ab = B - A
+    cd = D - C
+    
+    # matrices
+    coeff_matrix = np.array(
+        [
+            [ab[0], -cd[0]], # x values
+            [ab[1], -cd[1]], # y values
+            [ab[2], -cd[2]]  # z values
+        ]
+        )
+    
+    target_matrix = np.array(
+        [
+        [C[0] - A[0]], # x values
+        [C[1] - A[1]], # y values
+        [C[2] - A[2]], # z values
+        ]
+        )
+    
+    param_vars, res, rank, svs = np.linalg.lstsq(coeff_matrix, target_matrix, rcond=None)
+    t, s = param_vars # however, these are best fit values, not perfect answers, so we'll have to filter through them
+    
+    # first, confirm that they're even within the domain
+    t_within_bound = t_bounds[0] <= t and t <= t_bounds[1]
+    s_within_bound = s_bounds[0] <= s and s <= s_bounds[1]
+    
+    if t_within_bound and s_within_bound:
+        p = ab * t + A
+        q = cd * s + C
+        if np.linalg.norm(p - q) < EPSILON:
+            # intersection
+            does_intersect = True
+        else:
+            does_intersect = False
+            
+    else:
+        does_intersect = False
+            
+    return does_intersect
+    
 
 # add new edge to node n with length elen and angle drawn from a distribution
 def new_edge(G, n, elen, lev, point_tree, override = False):
 
-    alpha = get_alpha(G, n)
+    alpha1, alpha2 = get_alphas(G, n)
 
     # if override:
     #     buffer = np.pi / 16
@@ -29,19 +120,27 @@ def new_edge(G, n, elen, lev, point_tree, override = False):
     #     alpha = uniform(-spread * buffer, spread * buffer)
 
     m = G.number_of_nodes()
-    beta = G.nodes[n]['angle']
+    beta1 = G.nodes[n]['theta']
+    new_theta = beta1 + alpha1
+    
+    beta2 = G.nodes[n]['phi']
+    new_phi = beta2 + alpha2
+    
+    new_coords = elen * np.array(
+        [np.sin(new_phi) * np.cos(new_theta),
+         np.sin(new_phi) * np.sin(new_theta),
+         np.cos(new_phi)]
+        )
 
-    angle = beta + alpha
+    G.add_node(m, theta=new_theta, phi=new_phi, level = lev,
+               coords = G.nodes[n]['coords'] + new_coords)
 
-    G.add_node(m, angle = angle, level = lev,
-               coords = G.nodes[n]['coords'] + elen * np.array((np.cos(angle), np.sin(angle))))
-
-    G.add_edge(n, m, level = lev, length = elen, angle = beta + alpha)
+    G.add_edge(n, m, level = lev, length = elen, theta=new_theta, phi=new_phi)
 
     success = True
     # check for overlaps with other edges -- if so, new addition was unsuccessful
 
-    # find all nodes within a radius r of m
+    # find all nodes within a radius r away from m
     neibs = point_tree.query_ball_point(G.nodes[m]['coords'], 2*elen)
 
     # check that the new edge (n, m) does not overlap with any existing edges
@@ -55,7 +154,7 @@ def new_edge(G, n, elen, lev, point_tree, override = False):
                 C = G.nodes[n1]['coords']
                 D = G.nodes[n2]['coords']
 
-                if intersect(A, B, C, D):
+                if intersect(A, B, C, D, elen):
                     success = False
 
     # if the new edge has overlaps, it is removed and the
@@ -67,8 +166,9 @@ def new_edge(G, n, elen, lev, point_tree, override = False):
 
 # add new edge to node n with length elen and angle drawn from a distribution
 def new_edge_small_buffer(G, n, elen, lev, point_tree):
+    '''Note: this function was not updated for 3D simulation'''
 
-    alpha = get_alpha(G, n)
+    alpha = get_alphas(G, n)
 
     m = G.number_of_nodes()
     beta = G.nodes[n]['angle']
@@ -131,7 +231,10 @@ def new_long_edge(G, n, elen, lev, point_tree):
     return G
 
 # pick a persistent angle for tips extension and a random angle for side budding
-def get_alpha(G, n):
+def get_alphas(G, n):
+    '''Returns a tuple of random (theta, phi).
+    The theta depends on whether or not the given node is capable of branching.
+    If you want to implement self-avoidance, this is the place to do it, maybe with the help of a point-tree'''
 
     buffer = np.pi / 16
     spread = 1  # 5
@@ -140,17 +243,20 @@ def get_alpha(G, n):
     theta_1 = np.pi / 9
 
     if G.degree(n) == 1:
-        #alpha = uniform(-spread * buffer, spread * buffer)
-        alpha = uniform(-theta_1, theta_1)
+        # pick angle for side budding
+        
+        # alpha = uniform(-spread * buffer, spread * buffer)
+        alpha1 = uniform(-theta_1, theta_1)
     else:
+        # pick angle for tip extension
+        
         # pick up or down sprouting direction by the sign
         #alpha = np.random.choice([-1, 1]) * uniform(np.pi / 2 - spread * buffer, np.pi / 2 + spread * buffer)
 
-        alpha = np.random.choice([-1, 1]) * np.pi /2#5/6
+        alpha1 = np.random.choice([-1, 1]) * np.pi
+        # why is it these angles?
 
-
-
-    return alpha
+    return (alpha1, np.uniform(-PHI_BOUND, PHI_BOUND))
 
 # get number of nodes within radius r of node n
 def get_node_occupancy(G, n, r, point_tree):
@@ -210,37 +316,42 @@ def stretch(G, alpha):
 def initialize_line(initial_length, elen):
     '''Starts a graph with initial_length number of nodes, excluding the root
     
-    
     '''
 
     # start new graph
     G = nx.Graph()
     
     # make two nodes and connect them with an edge
-    G.add_node(0, coords=np.array((0, 0)), angle=np.pi, level = 0)
-    G.add_node(1, coords=np.array((elen, 0)), angle=0, level = 0)
+    G.add_node(0, coords=np.array((0, 0, 0)), theta=np.pi, phi=0, level = 0)
+    G.add_node(1, coords=np.array((elen, 0, 0)), theta=0, phi=0, level = 0) # should any of these initial angles be random
     G.add_edge(0, 1, level=0, length=elen)
 
     i = 1
     
     # add new nodes until we have reached the desired length
     while i < initial_length:
-        alpha = uniform(-np.pi / 64, np.pi / 64) # small random deviation
-
         m = G.number_of_nodes()
         # the number of nodes is the number the new node will take on, since we start from 0
+
+        # below with the alphas and deltas, we generate random delta and phi values
+
+        alpha = uniform(-np.pi / 64, np.pi / 64) # small random deviation
+        beta = G.nodes[i]['theta'] # get the angle of the "terminal" node
+        new_theta = beta + alpha # add to get new theta
+
+        alpha2 = uniform(-PHI_BOUND, PHI_BOUND) # this range might need to be smaller since up down deviation is not as much (remember the cell is nearly flat)
+        beta2 = G.nodes[i]['phi']
+        new_phi = alpha2 + beta2
         
-        beta = G.nodes[i]['angle'] # get the angle of the "terminal" node
-
-        angle = beta + alpha
-        # the small random deviation added with the previous node's angle makes the angle fo the new node
-
         # create and connect the node with parameters made above
-        G.add_node(m, angle=angle, level = 0)
-        G.nodes[m]['coords'] = (G.nodes[i]['coords'][0] + elen * np.cos(angle),
-                                G.nodes[i]['coords'][1] + elen * np.sin(angle))
+        G.add_node(m, theta=new_theta, phi=new_phi, level = 0)
+        # using polar coordinates below, elen is our "roe"
+        G.nodes[m]['coords'] = (G.nodes[i]['coords'][0] + elen * np.sin(new_phi) * np.cos(new_theta),
+                                G.nodes[i]['coords'][1] + elen * np.sin(new_phi) * np.sin(new_theta),
+                                G.nodes[i]['coords'][1] + elen * np.cos(new_phi)
+                                )
 
-        G.add_edge(i, m, level=0, length=elen, angle=beta + alpha)
+        G.add_edge(i, m, level=0, length=elen, theta=new_theta, phi=new_phi)
 
         i += 1
 
@@ -249,30 +360,41 @@ def initialize_line(initial_length, elen):
 def initialize_tri(initial_length, elen):
 
     G = nx.Graph()
-    G.add_node(0, coords=np.array((0, 0)), angle=np.pi, level = 0)
+    G.add_node(0, coords=np.array((0, 0, 0)), theta=np.pi, phi=0, level = 0)
 
     for i in [1, 2, 3]:
-        ang = np.pi/6 + (i-1)*2*np.pi/3 # think tilted mercedes benz symbol on unit circle
+        new_theta = np.pi/6 + (i-1)*2*np.pi/3 # think tilted mercedes benz symbol on unit circle
+        new_phi = uniform(-PHI_BOUND, PHI_BOUND)
         
         # add a node at tips of mercedes benz star symbol
-        G.add_node(i, coords=elen*np.array((np.cos(ang), np.sin(ang))), angle=ang, level = 0)
+        new_coords = elen * np.array(np.sin(new_phi) * np.cos(new_theta), np.sin(new_phi) * np.sin(new_theta), np.cos(new_phi))
+        G.add_node(i, coords=new_coords, theta=new_theta, phi=new_phi, level = 0)
         G.add_edge(0, i, level=0, length=elen)
 
     i = 1
     while i < initial_length:
-        alpha = uniform(-np.pi / 32, np.pi / 32) # larger range for deviation than initialize_line
-        
-        # rest is very similar to initialize_line
         m = G.number_of_nodes()
-        beta = G.nodes[i]['angle']
+        # the number of nodes is the number the new node will take on, since we start from 0
 
-        angle = beta + alpha
+        # below with the alphas and deltas, we generate random delta and phi values
 
-        G.add_node(m, angle=angle, level = 0)
-        G.nodes[m]['coords'] = (G.nodes[i]['coords'][0] + elen * np.cos(angle),
-                                G.nodes[i]['coords'][1] + elen * np.sin(angle))
+        alpha = uniform(-np.pi / 64, np.pi / 64) # small random deviation
+        beta = G.nodes[i]['theta'] # get the angle of the "terminal" node
+        new_theta = beta + alpha # add to get new theta
 
-        G.add_edge(i, m, level=0, length=elen, angle=beta + alpha)
+        alpha2 = uniform(-PHI_BOUND, PHI_BOUND) # this range might need to be smaller since up down deviation is not as much (remember the cell is nearly flat)
+        beta2 = G.nodes[i]['phi']
+        new_phi = alpha2 + beta2
+        
+        # create and connect the node with parameters made above
+        G.add_node(m, theta=new_theta, phi=new_phi, level = 0)
+        # using polar coordinates below, elen is our "roe"
+        G.nodes[m]['coords'] = (G.nodes[i]['coords'][0] + elen * np.sin(new_phi) * np.cos(new_theta),
+                                G.nodes[i]['coords'][1] + elen * np.sin(new_phi) * np.sin(new_theta),
+                                G.nodes[i]['coords'][1] + elen * np.cos(new_phi)
+                                )
+
+        G.add_edge(i, m, level=0, length=elen, theta=new_theta, phi=new_phi)
 
         i += 1
 
@@ -360,8 +482,7 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
 
         cands1 = [n for n in G.nodes() if G.degree(n) == 1]
         cands2 = [n for n in G.nodes() if G.degree(n) == 2]
-        # if the degree is greater than 3, we should not add more to it.
-        # Else, it is no longer a binary tree
+        # if the degree is greater than 3, we should not add more to it (ruins binary tree)
 
         #degree_tuples = G.degree()
 
@@ -652,7 +773,7 @@ def color_plot_walk(G):
     plt.gca().set_aspect('equal', adjustable='box')
     plt.axis('off')
     
-    file_name = f'Ryan_tests/frame_{G.number_of_nodes():d}'
+    file_name = f'frames/frame_{G.number_of_nodes():d}'
     fig.savefig(file_name, dpi=300, bbox_inches='tight')
 
     plt.close()
