@@ -51,7 +51,7 @@ def color_plot_walk(G, savename):
 
     print(xcent, ycent)
 
-    lim = 120
+    lim = 90
 
     plt.axis([xcent - lim, xcent + lim, ycent - lim, ycent + lim])
     plt.gca().set_aspect('equal', adjustable='box')
@@ -117,8 +117,13 @@ for rep in range(reps):
 
     G = BSARW(size, elen, branch_probability = b, stretch_factor = s,
                        initial_len = 30, init = 'line', right_side_only = True)
+    
+    with open("final_images/index.txt", "r+") as file:
+        index = int(file.read())
 
-    savename = 'Ryan_tests/N_' + str(size) + '_s_' + str(s) + '_b_' + str(b) + '_' + str(rep)
+        savename = 'final_images/N_' + str(size) + '_s_' + str(s) + '_b_' + str(b) + '_' + str(index)
+    
+        file.write(str(index + 1))
     
     #### Turn video frames into video
     video_filename = f'Video/simulation_{size}_{s}_{b}_1.mp4'
@@ -129,7 +134,7 @@ for rep in range(reps):
                 vcodec='mpeg4',
                 r=str(frame_rate),
                 video_bitrate='8000k')\
-        .run(overwrite_output=False)
+        .run(overwrite_output=True)
         
     ####
 
@@ -145,7 +150,10 @@ for rep in range(reps):
     
     
     # analyze the range of z values
-    zs = [i[:-1] for i in nx.get_node_attributes(G, "coords").values()]
+    zs = [i[-1] for i in nx.get_node_attributes(G, "coords").values()]
+    xs = [i[0] for i in nx.get_node_attributes(G, "coords").values()]
+    ys = [i[1] for i in nx.get_node_attributes(G, "coords").values()]
+    
 
     plt.clf()
 

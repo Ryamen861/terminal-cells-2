@@ -10,7 +10,7 @@ import seaborn as sns
 import scipy as sci
 
 # constants
-PHI_BOUND = np.pi / 128
+PHI_BOUND_VAR = 2
 EPSILON = sys.float_info.epsilon
 
 # below are 2D intersection finders
@@ -100,6 +100,7 @@ def intersect(A, B, C, D, elen):
         if np.linalg.norm(p - q) < EPSILON:
             # intersection
             does_intersect = True
+            print("############### intersect happened")
         else:
             does_intersect = False
             
@@ -256,7 +257,7 @@ def get_alphas(G, n):
         alpha1 = np.random.choice([-1, 1]) * np.pi
         # why is it these angles?
 
-    return (alpha1, np.uniform(-PHI_BOUND, PHI_BOUND))
+    return (alpha1, uniform(np.pi/PHI_BOUND_VAR, (PHI_BOUND_VAR - 1) * np.pi / PHI_BOUND_VAR))
 
 # get number of nodes within radius r of node n
 def get_node_occupancy(G, n, r, point_tree):
@@ -339,7 +340,7 @@ def initialize_line(initial_length, elen):
         beta = G.nodes[i]['theta'] # get the angle of the "terminal" node
         new_theta = beta + alpha # add to get new theta
 
-        alpha2 = uniform(-PHI_BOUND, PHI_BOUND) # this range might need to be smaller since up down deviation is not as much (remember the cell is nearly flat)
+        alpha2 = uniform(np.pi/PHI_BOUND_VAR, (PHI_BOUND_VAR - 1) * np.pi / PHI_BOUND_VAR) # this range might need to be smaller since up down deviation is not as much (remember the cell is nearly flat)
         beta2 = G.nodes[i]['phi']
         new_phi = alpha2 + beta2
         
@@ -364,7 +365,7 @@ def initialize_tri(initial_length, elen):
 
     for i in [1, 2, 3]:
         new_theta = np.pi/6 + (i-1)*2*np.pi/3 # think tilted mercedes benz symbol on unit circle
-        new_phi = uniform(-PHI_BOUND, PHI_BOUND)
+        new_phi = uniform(np.pi/PHI_BOUND_VAR, (PHI_BOUND_VAR - 1) * np.pi / PHI_BOUND_VAR)
         
         # add a node at tips of mercedes benz star symbol
         new_coords = elen * np.array(np.sin(new_phi) * np.cos(new_theta), np.sin(new_phi) * np.sin(new_theta), np.cos(new_phi))
@@ -382,7 +383,7 @@ def initialize_tri(initial_length, elen):
         beta = G.nodes[i]['theta'] # get the angle of the "terminal" node
         new_theta = beta + alpha # add to get new theta
 
-        alpha2 = uniform(-PHI_BOUND, PHI_BOUND) # this range might need to be smaller since up down deviation is not as much (remember the cell is nearly flat)
+        alpha2 = uniform(np.pi/PHI_BOUND_VAR, (PHI_BOUND_VAR - 1) * np.pi / PHI_BOUND_VAR) # this range might need to be smaller since up down deviation is not as much (remember the cell is nearly flat)
         beta2 = G.nodes[i]['phi']
         new_phi = alpha2 + beta2
         
@@ -515,7 +516,7 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
                 keep_adding = False
                 break
             
-            color_plot_walk(G)
+            color_plot_walk(G) # turn on for video making
 
         # frame = 50
         # if level_num % frame == 1:
@@ -747,11 +748,11 @@ def color_plot_walk(G):
         c1 = G.nodes[e[1]]['coords']
 
         # the level gives index for RGB value
-        # c = palette[e[2]['level']]
+        c = palette[e[2]['level']]
         
         # the commented code above assigns color by level, or recency
         # the following code below will assign color by z coordinate
-        c = palette[int(c0[2])]
+        # c = palette[int(c0[2])]
         
         if e[2]['level'] == 0:
             # if the level is zero, then make it blue
@@ -764,7 +765,6 @@ def color_plot_walk(G):
     #plt.axis('off')
 
     coords = np.array([i[:2] for i in nx.get_node_attributes(G, 'coords').values()])
-    print(f"the coord set looks like {nx.get_node_attributes(G, 'coords').values()}")
     
     xs = coords[:, 0]
     ys = coords[:, 1]
@@ -774,7 +774,7 @@ def color_plot_walk(G):
 
     # print(xcent, ycent)
 
-    lim = 120
+    lim = 50
 
     plt.axis([xcent - lim, xcent + lim, ycent - lim, ycent + lim])
     plt.gca().set_aspect('equal', adjustable='box')
