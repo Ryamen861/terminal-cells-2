@@ -121,7 +121,7 @@ for rep in range(reps):
     savename = 'Ryan_tests/N_' + str(size) + '_s_' + str(s) + '_b_' + str(b) + '_' + str(rep)
     
     #### Turn video frames into video
-    video_filename = f'Video/simulation_{size}_{s}_{b}.mp4'
+    video_filename = f'Video/simulation_{size}_{s}_{b}_1.mp4'
     
     ffmpeg\
         .input('frames/frame_%d.png', start_number=32)\
@@ -141,13 +141,17 @@ for rep in range(reps):
     # print(degs.count(2))
     # print(degs.count(3))
     # print('number of branches:', B, degs.count(1) + degs.count(3) - 1)
-
+    
+    
+    
+    # analyze the range of z values
+    zs = [i[:-1] for i in nx.get_node_attributes(G, "coords").values()]
 
     plt.clf()
 
     #plot_walk(G, sensitivity_radius, max_occupancy, latency_dist, savename, node_opts = True)
 
-    color_plot_walk(G, savename)
+    # color_plot_walk(G, savename) # turn this on when you want just the final picture
 
     print('size:', G.number_of_nodes(), 'total length:', round(total_edge_length(G), 2))
 

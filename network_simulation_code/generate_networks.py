@@ -740,14 +740,19 @@ def color_plot_walk(G):
     for e in G.edges(data=True):
         # e is a tuple that looks like this:
         # (node_connected_by_edge, other_node_connected_by_edge, dict_of_attributes)
-        # the dictionary holds level, length, and ange information
+        # the dictionary holds level, length, and theta/phi information
         
         # find the coordinates of the two nodes connected by this edge
         c0 = G.nodes[e[0]]['coords']
         c1 = G.nodes[e[1]]['coords']
 
         # the level gives index for RGB value
-        c = palette[e[2]['level']]
+        # c = palette[e[2]['level']]
+        
+        # the commented code above assigns color by level, or recency
+        # the following code below will assign color by z coordinate
+        c = palette[int(c0[2])]
+        
         if e[2]['level'] == 0:
             # if the level is zero, then make it blue
             # reminder: nodes of level zero are ones made in the initialization
@@ -759,6 +764,8 @@ def color_plot_walk(G):
     #plt.axis('off')
 
     coords = np.array([i[:2] for i in nx.get_node_attributes(G, 'coords').values()])
+    print(f"the coord set looks like {nx.get_node_attributes(G, 'coords').values()}")
+    
     xs = coords[:, 0]
     ys = coords[:, 1]
 
