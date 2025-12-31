@@ -456,6 +456,8 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
         box_lims = [0, W, -H/4, 3*H/4]
 
         level_num += 1
+        
+        # this is a test change to check branches
 
         if get_intermediate_vals:
             intermediate_Ls.append(total_edge_length(G))
