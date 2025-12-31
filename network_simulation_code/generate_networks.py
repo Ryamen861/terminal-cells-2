@@ -2,6 +2,7 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 import sys
+import math
 from random import uniform, shuffle, random, choice
 import scipy.spatial as spatial
 from matplotlib import patches
@@ -112,7 +113,7 @@ def intersect(A, B, C, D, elen):
 # add new edge to node n with length elen and angle drawn from a distribution
 def new_edge(G, n, elen, lev, point_tree, override = False):
 
-    alpha1, alpha2 = get_alphas(G, n)
+    alpha1, alpha2 = get_alphas(G, n, point_tree, elen)
 
     # if override:
     #     buffer = np.pi / 16
@@ -132,7 +133,6 @@ def new_edge(G, n, elen, lev, point_tree, override = False):
          np.sin(new_phi) * np.sin(new_theta),
          np.cos(new_phi)]
         )
-    
     
     G.add_node(m, theta=new_theta, phi=new_phi, level = lev,
                coords = G.nodes[n]['coords'] + delta_coords)
@@ -232,8 +232,17 @@ def new_long_edge(G, n, elen, lev, point_tree):
 
     return G
 
+def check_floating_point_error(to_be_arccosed):
+    if to_be_arccosed > 1:
+        if math.isclose(to_be_arccosed, 1):
+            return 1
+        else:
+            print("Then we got a real problem")
+    else:
+        return to_be_arccosed
+
 # pick a persistent angle for tips extension and a random angle for side budding
-def get_alphas(G, n):
+def get_alphas(G, n, point_tree, elen):
     '''Returns a tuple of random (theta, phi).
     The theta depends on whether or not the given node is capable of branching.
     If you want to implement self-avoidance, this is the place to do it, maybe with the help of a point-tree'''
@@ -243,23 +252,62 @@ def get_alphas(G, n):
     # # spread = 10
 
     theta_1 = np.pi / 9
+    
+    neibs = point_tree.query_ball_point(G.nodes[n]['coords'], 2*elen)
+    terminal_point = G.nodes[n]["coords"]
+    final_vector = np.array([0.0, 0.0, 0.0])
+    
+    # add up all the vectors pointing from neighbors to current node about to bud/extend
+    for node in neibs:
+        initial_point = np.array(G.nodes[node]["coords"])
+        new_vector = terminal_point - initial_point
+        final_vector += new_vector
+                
+    # find theta
+    growing_node = list(G.neighbors(n))[0] # growing_node where the bud/extend will happen from
+    growing_node_coords = np.array(G.nodes[growing_node]["coords"])
+    d_vector = terminal_point - growing_node_coords
+    
+    # make two 2D vectors, now can use dot product to find theta
+    d_vector_2d = np.array([d_vector[0], d_vector[1]])
+    f_vector_2d = np.array([final_vector[0], final_vector[1]])
+    
+    # must check for a floating point error (sometimes it comes out 1.0000000000000002 and makes arccos error)
+    to_be_arccosed = np.dot(d_vector_2d, f_vector_2d) / (np.linalg.norm(d_vector_2d) * np.linalg.norm(f_vector_2d))
+    to_be_arccosed = check_floating_point_error(to_be_arccosed)
+    
+    avoiding_theta = np.arccos(to_be_arccosed)
+
+    # find phi
+    
+    # use 3D vectors
+    zeroed_f = np.append(f_vector_2d, 0)
+    
+    # check for floating point error
+    to_be_arccosed = np.dot(zeroed_f, final_vector) / (np.linalg.norm(zeroed_f) * np.linalg.norm(final_vector))
+    to_be_arccosed = check_floating_point_error(to_be_arccosed)
+
+    avoiding_phi = np.arccos(to_be_arccosed)
+    # something sus about adding this (no negatives) to something that ranges from -pi something to pi something
+        
+    # but a lot of the time, alpha1 and alpha2 are zero because they're just chilling, no nearby nodes to avoid
+    # but as they branch, there's got be some level of randomness
+    # so I think it would be a good idea to combine this angle with a random angle
+    # there are probably many different ways to "combine" two angles (even a distriution could be set up)
+    # but just adding them could be a possible good approximation, so I will try that
 
     if G.degree(n) == 1:
-        # pick angle for side budding
-        
-        # alpha = uniform(-spread * buffer, spread * buffer)
+        # pick angle for side budding        
         alpha1 = uniform(-theta_1, theta_1)
     else:
         # pick angle for tip extension
-        
-        # pick up or down sprouting direction by the sign
-        #alpha = np.random.choice([-1, 1]) * uniform(np.pi / 2 - spread * buffer, np.pi / 2 + spread * buffer)
-
-        alpha1 = np.random.choice([-1, 1]) * np.pi / 2
+        alpha1 = np.random.choice([-1, 1]) * np.pi / 2 # why only these values though
 
     alpha2 = uniform(-np.pi / 128, np.pi / 128)
+    
+    print(f"theta: {avoiding_theta}, phi: {avoiding_phi}, neighbors: {len(list(G.neighbors(n)))}")
 
-    return (alpha1, alpha2)
+    return (alpha1 + avoiding_theta, alpha2 + avoiding_phi)
 
 # get number of nodes within radius r of node n
 def get_node_occupancy(G, n, r, point_tree):
@@ -457,8 +505,6 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
 
         level_num += 1
         
-        # this is a test change to check branches
-
         if get_intermediate_vals:
             intermediate_Ls.append(total_edge_length(G))
             intermediate_As.append(convex_hull_area(G))

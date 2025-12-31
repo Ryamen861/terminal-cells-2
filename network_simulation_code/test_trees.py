@@ -76,7 +76,7 @@ all_As = []
 all_Ls = []
 
 
-reps = 10
+reps = 1
 
 size_distribution = np.random.normal(800, 200, reps)
 
@@ -119,13 +119,13 @@ for rep in range(reps):
                        initial_len = 30, init = 'line', right_side_only = True)
     
     # turn on for individual images stored in "final_images_3D" folder
-    # with open("final_images_3D/index.txt", "r") as file:
-    #     index = int(file.read())
+    with open("final_images_3D/index.txt", "r") as file:
+        index = int(file.read())
 
-    # savename = 'final_images_3D/N_' + str(size) + '_s_' + str(s) + '_b_' + str(b) + '_' + str(index)
+    savename = 'final_images_3D/N_' + str(size) + '_s_' + str(s) + '_b_' + str(b) + '_' + str(index)
     
-    # with open("final_images_3D/index.txt", "w") as file:
-    #     file.write(str(index + 1))
+    with open("final_images_3D/index.txt", "w") as file:
+        file.write(str(index + 1))
     
     #### Turn video frames into video
     video_filename = f'Video/simulation_{size}_{s}_{b}_1_IN_3D.mp4'
