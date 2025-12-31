@@ -10,7 +10,6 @@ import seaborn as sns
 import scipy as sci
 
 # constants
-PHI_BOUND_VAR = 2
 EPSILON = sys.float_info.epsilon
 
 # below are 2D intersection finders
@@ -121,20 +120,22 @@ def new_edge(G, n, elen, lev, point_tree, override = False):
     #     alpha = uniform(-spread * buffer, spread * buffer)
 
     m = G.number_of_nodes()
+    
     beta1 = G.nodes[n]['theta']
     new_theta = beta1 + alpha1
     
     beta2 = G.nodes[n]['phi']
     new_phi = beta2 + alpha2
     
-    new_coords = elen * np.array(
+    delta_coords = elen * np.array(
         [np.sin(new_phi) * np.cos(new_theta),
          np.sin(new_phi) * np.sin(new_theta),
          np.cos(new_phi)]
         )
-
+    
+    
     G.add_node(m, theta=new_theta, phi=new_phi, level = lev,
-               coords = G.nodes[n]['coords'] + new_coords)
+               coords = G.nodes[n]['coords'] + delta_coords)
 
     G.add_edge(n, m, level = lev, length = elen, theta=new_theta, phi=new_phi)
 
@@ -237,9 +238,9 @@ def get_alphas(G, n):
     The theta depends on whether or not the given node is capable of branching.
     If you want to implement self-avoidance, this is the place to do it, maybe with the help of a point-tree'''
 
-    buffer = np.pi / 16
-    spread = 1  # 5
-    # spread = 10
+    # buffer = np.pi / 16
+    # spread = 1  # 5
+    # # spread = 10
 
     theta_1 = np.pi / 9
 
@@ -254,10 +255,11 @@ def get_alphas(G, n):
         # pick up or down sprouting direction by the sign
         #alpha = np.random.choice([-1, 1]) * uniform(np.pi / 2 - spread * buffer, np.pi / 2 + spread * buffer)
 
-        alpha1 = np.random.choice([-1, 1]) * np.pi
-        # why is it these angles?
+        alpha1 = np.random.choice([-1, 1]) * np.pi / 2
 
-    return (alpha1, uniform(np.pi/PHI_BOUND_VAR, (PHI_BOUND_VAR - 1) * np.pi / PHI_BOUND_VAR))
+    alpha2 = uniform(-np.pi / 128, np.pi / 128)
+
+    return (alpha1, alpha2)
 
 # get number of nodes within radius r of node n
 def get_node_occupancy(G, n, r, point_tree):
@@ -313,7 +315,7 @@ def stretch(G, alpha):
 
     return G
 
-# 2 initalization functions are below (initalize_line and initialize_tri)
+# 2 initialization functions are below (initalize_line and initialize_tri)
 def initialize_line(initial_length, elen):
     '''Starts a graph with initial_length number of nodes, excluding the root
     
@@ -324,7 +326,7 @@ def initialize_line(initial_length, elen):
     
     # make two nodes and connect them with an edge
     G.add_node(0, coords=np.array((0, 0, 0)), theta=np.pi, phi=0, level = 0)
-    G.add_node(1, coords=np.array((elen, 0, 0)), theta=0, phi=0, level = 0) # should any of these initial angles be random
+    G.add_node(1, coords=np.array((elen, 0, 0)), theta=0, phi=np.pi / 2, level = 0) # should any of these initial angles be random
     G.add_edge(0, 1, level=0, length=elen)
 
     i = 1
@@ -337,19 +339,20 @@ def initialize_line(initial_length, elen):
         # below with the alphas and deltas, we generate random delta and phi values
 
         alpha = uniform(-np.pi / 64, np.pi / 64) # small random deviation
-        beta = G.nodes[i]['theta'] # get the angle of the "terminal" node
+        beta = G.nodes[i]['theta'] # get the angle of the latest node
         new_theta = beta + alpha # add to get new theta
 
-        alpha2 = uniform(np.pi/PHI_BOUND_VAR, (PHI_BOUND_VAR - 1) * np.pi / PHI_BOUND_VAR) # this range might need to be smaller since up down deviation is not as much (remember the cell is nearly flat)
+        alpha2 = uniform(-np.pi / 128, np.pi / 128) # smaller range because tracheal cells are nearly flat
         beta2 = G.nodes[i]['phi']
         new_phi = alpha2 + beta2
+        # there is most defnitely a problem with adding pi/2 to phi. It only goes between pi/2 and pi
         
         # create and connect the node with parameters made above
         G.add_node(m, theta=new_theta, phi=new_phi, level = 0)
         # using polar coordinates below, elen is our "roe"
         G.nodes[m]['coords'] = (G.nodes[i]['coords'][0] + elen * np.sin(new_phi) * np.cos(new_theta),
                                 G.nodes[i]['coords'][1] + elen * np.sin(new_phi) * np.sin(new_theta),
-                                G.nodes[i]['coords'][1] + elen * np.cos(new_phi)
+                                G.nodes[i]['coords'][2] + elen * np.cos(new_phi)
                                 )
 
         G.add_edge(i, m, level=0, length=elen, theta=new_theta, phi=new_phi)
@@ -365,7 +368,7 @@ def initialize_tri(initial_length, elen):
 
     for i in [1, 2, 3]:
         new_theta = np.pi/6 + (i-1)*2*np.pi/3 # think tilted mercedes benz symbol on unit circle
-        new_phi = uniform(np.pi/PHI_BOUND_VAR, (PHI_BOUND_VAR - 1) * np.pi / PHI_BOUND_VAR)
+        new_phi = uniform(-np.pi / 128, np.pi / 128)
         
         # add a node at tips of mercedes benz star symbol
         new_coords = elen * np.array(np.sin(new_phi) * np.cos(new_theta), np.sin(new_phi) * np.sin(new_theta), np.cos(new_phi))
@@ -383,7 +386,7 @@ def initialize_tri(initial_length, elen):
         beta = G.nodes[i]['theta'] # get the angle of the "terminal" node
         new_theta = beta + alpha # add to get new theta
 
-        alpha2 = uniform(np.pi/PHI_BOUND_VAR, (PHI_BOUND_VAR - 1) * np.pi / PHI_BOUND_VAR) # this range might need to be smaller since up down deviation is not as much (remember the cell is nearly flat)
+        alpha2 = uniform(-np.pi / 128, np.pi / 128)
         beta2 = G.nodes[i]['phi']
         new_phi = alpha2 + beta2
         
@@ -392,7 +395,7 @@ def initialize_tri(initial_length, elen):
         # using polar coordinates below, elen is our "roe"
         G.nodes[m]['coords'] = (G.nodes[i]['coords'][0] + elen * np.sin(new_phi) * np.cos(new_theta),
                                 G.nodes[i]['coords'][1] + elen * np.sin(new_phi) * np.sin(new_theta),
-                                G.nodes[i]['coords'][1] + elen * np.cos(new_phi)
+                                G.nodes[i]['coords'][2] + elen * np.cos(new_phi)
                                 )
 
         G.add_edge(i, m, level=0, length=elen, theta=new_theta, phi=new_phi)
@@ -738,31 +741,30 @@ def color_plot_walk(G):
 
     palette = sns.dark_palette("red", maxLevel, reverse=True)
 
-    for e in G.edges(data=True):
-        # e is a tuple that looks like this:
+    for edge in G.edges(data=True):
+        # edge is a tuple that looks like this:
         # (node_connected_by_edge, other_node_connected_by_edge, dict_of_attributes)
         # the dictionary holds level, length, and theta/phi information
         
         # find the coordinates of the two nodes connected by this edge
-        c0 = G.nodes[e[0]]['coords']
-        c1 = G.nodes[e[1]]['coords']
+        c0 = G.nodes[edge[0]]['coords']
+        c1 = G.nodes[edge[1]]['coords']
 
         # the level gives index for RGB value
-        c = palette[e[2]['level']]
+        c = palette[edge[2]['level']]
         
         # the commented code above assigns color by level, or recency
         # the following code below will assign color by z coordinate
-        # c = palette[int(c0[2])]
+        # c = palette[int(c1[2])] # but this has negative values too, fix this
         
-        if e[2]['level'] == 0:
+        if edge[2]['level'] == 0:
             # if the level is zero, then make it blue
             # reminder: nodes of level zero are ones made in the initialization
              c = 'b'
 
         plt.plot([c0[0], c1[0]], [c0[1], c1[1]], color=c, linewidth = .5)
 
-    #plt.axis('equal')
-    #plt.axis('off')
+    # plt.axis('equal')
 
     coords = np.array([i[:2] for i in nx.get_node_attributes(G, 'coords').values()])
     
@@ -772,58 +774,16 @@ def color_plot_walk(G):
     xcent = 0.5*(np.max(xs) + np.min(xs))
     ycent = 0.5*(np.max(ys) + np.min(ys))
 
-    # print(xcent, ycent)
-
-    lim = 50
+    lim = 120
 
     plt.axis([xcent - lim, xcent + lim, ycent - lim, ycent + lim])
     plt.gca().set_aspect('equal', adjustable='box')
     plt.axis('off')
+    
+    plt.show()
     
     file_name = f'frames/frame_{G.number_of_nodes():d}'
     fig.savefig(file_name, dpi=300, bbox_inches='tight')
 
     plt.close()
 
-
-# def color_plot_walk(G, savename, special = 0):
-
-#     fig, ax = plt.subplots(figsize=(4, 4))
-
-#     palette = sns.dark_palette("red", G.number_of_nodes(), reverse=True)
-
-#     for e in G.edges(data=True):
-
-#         #print(e, e[2]['level'])
-
-#         c0 = G.nodes[e[0]]['coords']
-#         c1 = G.nodes[e[1]]['coords']
-
-
-#         c = palette[e[2]['level']]
-#         #c = 'k'
-
-#         if e[2]['level'] == 0:
-#              c = 'b'
-            
-#         c = 'k'
-
-#         plt.plot([c0[0], c1[0]], [c0[1], c1[1]], color=c, linewidth = .5)
-
-#     # m = G.number_of_nodes() - 1
-#     # c0 = G.nodes[m]['coords']
-#     # plt.scatter(c0[0], c0[1], color = 'k')
-#     # 
-#     # if special > 0:
-#     #     c0 = G.nodes[special]['coords']
-#     #     plt.scatter(c0[0], c0[1], color='b')
-#     # 
-#     # print(list(G.neighbors(m)))
-
-#     plt.xlim(-180, 380)
-#     plt.ylim(-280, 280)
-
-#     #plt.axis('equal')
-
-#     plt.savefig(savename + '.pdf', bbox_inches='tight', dpi=300)
-#     plt.close()

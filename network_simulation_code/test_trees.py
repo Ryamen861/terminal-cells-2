@@ -51,7 +51,7 @@ def color_plot_walk(G, savename):
 
     print(xcent, ycent)
 
-    lim = 90
+    lim = 120
 
     plt.axis([xcent - lim, xcent + lim, ycent - lim, ycent + lim])
     plt.gca().set_aspect('equal', adjustable='box')
@@ -76,7 +76,7 @@ all_As = []
 all_Ls = []
 
 
-reps = 1
+reps = 10
 
 size_distribution = np.random.normal(800, 200, reps)
 
@@ -118,15 +118,17 @@ for rep in range(reps):
     G = BSARW(size, elen, branch_probability = b, stretch_factor = s,
                        initial_len = 30, init = 'line', right_side_only = True)
     
-    with open("final_images/index.txt", "r+") as file:
-        index = int(file.read())
+    # turn on for individual images stored in "final_images_3D" folder
+    # with open("final_images_3D/index.txt", "r") as file:
+    #     index = int(file.read())
 
-        savename = 'final_images/N_' + str(size) + '_s_' + str(s) + '_b_' + str(b) + '_' + str(index)
+    # savename = 'final_images_3D/N_' + str(size) + '_s_' + str(s) + '_b_' + str(b) + '_' + str(index)
     
-        file.write(str(index + 1))
+    # with open("final_images_3D/index.txt", "w") as file:
+    #     file.write(str(index + 1))
     
     #### Turn video frames into video
-    video_filename = f'Video/simulation_{size}_{s}_{b}_1.mp4'
+    video_filename = f'Video/simulation_{size}_{s}_{b}_1_IN_3D.mp4'
     
     ffmpeg\
         .input('frames/frame_%d.png', start_number=32)\
@@ -136,7 +138,7 @@ for rep in range(reps):
                 video_bitrate='8000k')\
         .run(overwrite_output=True)
         
-    ####
+    # ####
 
     B = get_num_coarsened_edges(G)
     print('number of branches:', B)
@@ -150,10 +152,10 @@ for rep in range(reps):
     
     
     # analyze the range of z values
-    zs = [i[-1] for i in nx.get_node_attributes(G, "coords").values()]
-    xs = [i[0] for i in nx.get_node_attributes(G, "coords").values()]
-    ys = [i[1] for i in nx.get_node_attributes(G, "coords").values()]
-    
+    coords = nx.get_node_attributes(G, "coords").values()
+    xs = [i[0] for i in coords]
+    ys = [i[1] for i in coords]
+    zs = [i[2] for i in coords]
 
     plt.clf()
 
