@@ -128,17 +128,24 @@ for rep in range(reps):
         file.write(str(index + 1))
     
     #### Turn video frames into video
-    video_filename = f'Video/simulation_{size}_{s}_{b}_1_IN_3D.mp4'
     
-    ffmpeg\
-        .input('frames/frame_%d.png', start_number=32)\
-        .output(video_filename,
-                vcodec='mpeg4',
-                r=str(frame_rate),
-                video_bitrate='8000k')\
-        .run(overwrite_output=True)
+    
+    # video_filename = f'Video/simulation_{s}_{b}_3D_{index}.mp4'
+    
+    # ffmpeg\
+    #     .input('frames/frame_%d.png', start_number=32)\
+    #     .output(video_filename,
+    #             vcodec='mpeg4',
+    #             r=str(frame_rate),
+    #             video_bitrate='8000k')\
+    #     .run(overwrite_output=True)
+        
         
     # ####
+    
+    from generate_networks import thetas, phis
+    print(max(thetas))
+    print(max(phis))
 
     B = get_num_coarsened_edges(G)
     print('number of branches:', B)
@@ -161,7 +168,7 @@ for rep in range(reps):
 
     #plot_walk(G, sensitivity_radius, max_occupancy, latency_dist, savename, node_opts = True)
 
-    # color_plot_walk(G, savename) # turn this on when you want just the final picture
+    color_plot_walk(G, savename) # turn this on when you want just the final picture
 
     print('size:', G.number_of_nodes(), 'total length:', round(total_edge_length(G), 2))
 
@@ -211,7 +218,7 @@ for rep in range(reps):
     #           + str(latency_dist) + '_' + str(rep) + '.gpickle')
 
     #nx.write_gpickle(G, 'corals/N_12_L_20_line.gpickle')
-
+    
 t2 = time.time()
 
 print(round(t2-t1, 2))

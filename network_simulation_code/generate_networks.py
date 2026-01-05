@@ -10,6 +10,9 @@ from helpers import total_edge_length, convex_hull_area, compute_void, number_of
 import seaborn as sns
 import scipy as sci
 
+thetas = []
+phis = []
+
 # constants
 EPSILON = sys.float_info.epsilon
 
@@ -240,20 +243,90 @@ def check_floating_point_error(to_be_arccosed):
             print("Then we got a real problem")
     else:
         return to_be_arccosed
+    
+def is_downward_growth(prev_vector, d_vector, for_theta: bool, elen):
+    '''Given a previous vector (node -1 to -0) and new direction vector (0 to 1, also defined as the sum of neighboring vectors),
+    gives whether the new node creates a vector with the 0 node that points up or down, with the previous vector on the x-axis.
+    
+    In other words, finds relative slope of two added vectors
+    
+    Returns:
+        
+        if positive slope:    True
+        if negative slope:    False
+        if zero slope:        None'''
+        
+    result = None
+        
+    second_index = 1 if for_theta else 2 # deciding whether to use y or z for finding theta or phi
+    
+    a = prev_vector[0]
+    b = prev_vector[second_index]
+    
+    if a == 0 and b == 0:
+        # if this is the case, the coeff_matrix made will be singular
+        if for_theta:
+            if d_vector[0] > 0:
+                result = True
+            else:
+                result = False
+        else:
+            if d_vector[0] < 0:
+                result = True
+            else:
+                result = False
+        
+        return result
+    
+    else:
+        # if the coeff_matrix is not a problem
+        coeff_matrix = np.array([
+            [a, -b],
+            [b, a]
+            ])
+        
+        ordinate_matrix = np.array([
+            [elen],
+            [0]
+            ])
+        
+        results = np.linalg.solve(coeff_matrix, ordinate_matrix)
+        cos_theta = results[0][0]
+        sin_theta = results[1][0]
+    
+        # figure out rotated coords of d_vector
+        c = d_vector[0]
+        d = d_vector[second_index]
+        
+        new_x = c * cos_theta - d * sin_theta
+        new_y = c * sin_theta + d * cos_theta
+            
+        if new_y / new_x < 0:
+            result = True
+        else:
+            # if it is positive or zero, just return False and we will do nothing about it
+            result = False
+        
+        if not for_theta:
+            # if the angle calcuation is for phi, phi going down is actually a positive addition to the current angle
+            return not result
+        else:
+            return result
 
 # pick a persistent angle for tips extension and a random angle for side budding
 def get_alphas(G, n, point_tree, elen):
     '''Returns a tuple of random (theta, phi).
-    The theta depends on whether or not the given node is capable of branching.
-    If you want to implement self-avoidance, this is the place to do it, maybe with the help of a point-tree'''
+    The theta depends on whether or not the given node is capable of branching.'''
 
-    # buffer = np.pi / 16
+    buffer = np.pi / 8
     # spread = 1  # 5
     # # spread = 10
 
     theta_1 = np.pi / 9
     
-    neibs = point_tree.query_ball_point(G.nodes[n]['coords'], 2*elen)
+    neibs = point_tree.query_ball_point(G.nodes[n]['coords'], 2.5*elen) # 2 or 3 elen seems ok
+            # however, bigger coefficient makes it more frivoly and less branchy/more longer single branches
+    print(f"Length of neibs is {len(neibs)}")
     terminal_point = G.nodes[n]["coords"]
     final_vector = np.array([0.0, 0.0, 0.0])
     
@@ -263,13 +336,13 @@ def get_alphas(G, n, point_tree, elen):
         new_vector = terminal_point - initial_point
         final_vector += new_vector
                 
-    # find theta
-    growing_node = list(G.neighbors(n))[0] # growing_node where the bud/extend will happen from
-    growing_node_coords = np.array(G.nodes[growing_node]["coords"])
-    d_vector = terminal_point - growing_node_coords
+    # make the reference vector
+    prev_node = list(G.neighbors(n))[0] # if the node whose direction we are determining right now is 1, the -1 node
+    growing_node_coords = np.array(G.nodes[prev_node]["coords"])
+    comp_vector = terminal_point - growing_node_coords # -1 to 0 node vector, will be used to compare to final_vector to find theta
     
     # make two 2D vectors, now can use dot product to find theta
-    d_vector_2d = np.array([d_vector[0], d_vector[1]])
+    d_vector_2d = np.array([comp_vector[0], comp_vector[1]])
     f_vector_2d = np.array([final_vector[0], final_vector[1]])
     
     # must check for a floating point error (sometimes it comes out 1.0000000000000002 and makes arccos error)
@@ -278,17 +351,22 @@ def get_alphas(G, n, point_tree, elen):
     
     avoiding_theta = np.arccos(to_be_arccosed)
 
-    # find phi
-    
-    # use 3D vectors
-    zeroed_f = np.append(f_vector_2d, 0)
+    # find phi, but now using the x and z components for the 2d vectors
+    d_vector_2d = np.array([comp_vector[0], comp_vector[2]]) 
+    f_vector_2d = np.array([final_vector[0], final_vector[2]])
     
     # check for floating point error
-    to_be_arccosed = np.dot(zeroed_f, final_vector) / (np.linalg.norm(zeroed_f) * np.linalg.norm(final_vector))
+    to_be_arccosed = np.dot(d_vector_2d, f_vector_2d) / (np.linalg.norm(d_vector_2d) * np.linalg.norm(f_vector_2d))
     to_be_arccosed = check_floating_point_error(to_be_arccosed)
-
+    
     avoiding_phi = np.arccos(to_be_arccosed)
-    # something sus about adding this (no negatives) to something that ranges from -pi something to pi something
+    
+    # however, the dot products only give positive angles, but in reality, they could be -/+
+    # with the framework we decided on, so the following function will give the sign of the angles
+    if is_downward_growth(comp_vector, final_vector, True, elen):
+        avoiding_theta *= -1
+    if is_downward_growth(comp_vector, final_vector, False, elen):
+        avoiding_phi *= -1
         
     # but a lot of the time, alpha1 and alpha2 are zero because they're just chilling, no nearby nodes to avoid
     # but as they branch, there's got be some level of randomness
@@ -302,11 +380,15 @@ def get_alphas(G, n, point_tree, elen):
     else:
         # pick angle for tip extension
         alpha1 = np.random.choice([-1, 1]) * np.pi / 2 # why only these values though
+        
+    avoiding_theta *= buffer
+    avoiding_phi *= buffer
+    
+    thetas.append(avoiding_theta)
+    phis.append(avoiding_phi)
 
     alpha2 = uniform(-np.pi / 128, np.pi / 128)
     
-    print(f"theta: {avoiding_theta}, phi: {avoiding_phi}, neighbors: {len(list(G.neighbors(n)))}")
-
     return (alpha1 + avoiding_theta, alpha2 + avoiding_phi)
 
 # get number of nodes within radius r of node n
@@ -567,7 +649,7 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
                 keep_adding = False
                 break
             
-            color_plot_walk(G) # turn on for video making
+            # color_plot_walk(G) # turn on for video making
 
         # frame = 50
         # if level_num % frame == 1:
