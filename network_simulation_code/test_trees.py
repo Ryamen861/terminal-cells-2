@@ -76,7 +76,7 @@ all_As = []
 all_Ls = []
 
 
-reps = 1
+reps = 2
 
 size_distribution = np.random.normal(800, 200, reps)
 
@@ -116,7 +116,7 @@ for rep in range(reps):
     print('size:', size)
 
     G = BSARW(size, elen, branch_probability = b, stretch_factor = s,
-                       initial_len = 30, init = 'line', right_side_only = True)
+                       initial_len = 20, init = 'line', right_side_only = True)
     
     # turn on for individual images stored in "final_images_3D" folder
     with open("final_images_3D/index.txt", "r") as file:
@@ -142,10 +142,6 @@ for rep in range(reps):
         
         
     # ####
-    
-    from generate_networks import thetas, phis
-    print(max(thetas))
-    print(max(phis))
 
     B = get_num_coarsened_edges(G)
     print('number of branches:', B)

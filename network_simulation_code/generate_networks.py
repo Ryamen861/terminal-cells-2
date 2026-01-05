@@ -10,11 +10,9 @@ from helpers import total_edge_length, convex_hull_area, compute_void, number_of
 import seaborn as sns
 import scipy as sci
 
-thetas = []
-phis = []
-
 # constants
 EPSILON = sys.float_info.epsilon
+GROWTH_FRACTION = 1/4
 
 # below are 2D intersection finders
 # # intersection helper
@@ -163,7 +161,7 @@ def new_edge(G, n, elen, lev, point_tree, override = False):
                     success = False
 
     # if the new edge has overlaps, it is removed and the
-    # dock node is not chosen as a candidate again
+    # dock node is not chosen as a candidate again # I'm not sure if this is a true statement
     if not success:
         G.remove_node(m)
 
@@ -318,7 +316,7 @@ def get_alphas(G, n, point_tree, elen):
     '''Returns a tuple of random (theta, phi).
     The theta depends on whether or not the given node is capable of branching.'''
 
-    buffer = np.pi / 8
+    buffer = 1 / 8
     # spread = 1  # 5
     # # spread = 10
 
@@ -326,7 +324,7 @@ def get_alphas(G, n, point_tree, elen):
     
     neibs = point_tree.query_ball_point(G.nodes[n]['coords'], 2.5*elen) # 2 or 3 elen seems ok
             # however, bigger coefficient makes it more frivoly and less branchy/more longer single branches
-    print(f"Length of neibs is {len(neibs)}")
+
     terminal_point = G.nodes[n]["coords"]
     final_vector = np.array([0.0, 0.0, 0.0])
     
@@ -335,7 +333,7 @@ def get_alphas(G, n, point_tree, elen):
         initial_point = np.array(G.nodes[node]["coords"])
         new_vector = terminal_point - initial_point
         final_vector += new_vector
-                
+
     # make the reference vector
     prev_node = list(G.neighbors(n))[0] # if the node whose direction we are determining right now is 1, the -1 node
     growing_node_coords = np.array(G.nodes[prev_node]["coords"])
@@ -375,17 +373,14 @@ def get_alphas(G, n, point_tree, elen):
     # but just adding them could be a possible good approximation, so I will try that
 
     if G.degree(n) == 1:
-        # pick angle for side budding        
+        # pick angle for extension        
         alpha1 = uniform(-theta_1, theta_1)
     else:
-        # pick angle for tip extension
-        alpha1 = np.random.choice([-1, 1]) * np.pi / 2 # why only these values though
+        # pick angle for budding
+        alpha1 = np.random.choice([-1, 1]) * np.pi / 3 # decided by looking at example data
         
     avoiding_theta *= buffer
     avoiding_phi *= buffer
-    
-    thetas.append(avoiding_theta)
-    phis.append(avoiding_phi)
 
     alpha2 = uniform(-np.pi / 128, np.pi / 128)
     
@@ -501,7 +496,7 @@ def initialize_tri(initial_length, elen):
         new_phi = uniform(-np.pi / 128, np.pi / 128)
         
         # add a node at tips of mercedes benz star symbol
-        new_coords = elen * np.array(np.sin(new_phi) * np.cos(new_theta), np.sin(new_phi) * np.sin(new_theta), np.cos(new_phi))
+        new_coords = elen * np.array([np.sin(new_phi) * np.cos(new_theta), np.sin(new_phi) * np.sin(new_theta), np.cos(new_phi)])
         G.add_node(i, coords=new_coords, theta=new_theta, phi=new_phi, level = 0)
         G.add_edge(0, i, level=0, length=elen)
 
@@ -625,8 +620,10 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
 
         edge_added = False
 
-        # option to not let new branches form at the base
-        if right_side_only:
+        # option to not let new branches form at the root node
+        if right_side_only and init == "line":
+            # this doesn't need to be considered for tri initialization because
+            # the root node already has more than enough branches already (degree > 2)
             cands1.remove(0) # gets rid of node 0, the root node
 
         # go through list of candidate docks until one that fits all
@@ -636,7 +633,18 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
             #print(len(cands1), len(cands2))
 
             if random() < branch_probability and len(cands2) > 0:
-                dock = cands2.pop()
+                
+                # find the first instance of node with level = 0 (made by initialization)
+                if G.number_of_nodes() / max_size <= GROWTH_FRACTION:
+                    # if we are a certain fraction of the way fully growed
+                    for node in cands2:
+                        if G.nodes()[node]["level"] == 0:
+                            dock = node
+                            break
+                    
+                else:
+                    dock = cands2.pop()
+                
                 G, edge_added = new_edge(G, dock, elen, level_num, point_tree)
                 # in this case, we would be branching
             elif len(cands1) > 0:
