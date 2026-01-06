@@ -569,6 +569,8 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
     yspan = []
 
     step = 0
+    frame_interval = 10
+    frame_index = 0
     keep_adding = True
 
     while G.number_of_nodes() <= max_size and keep_adding:
@@ -653,8 +655,8 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
             # BP_state is the branch probability based on the state (state as in young or old)
             if G.number_of_nodes() < 60:
                 # when very young, we want some branching
-                BP_state = branch_probability * 2 # make this less than one?
-            elif G.number_of_nodes() < 200:
+                BP_state = branch_probability * 2
+            elif G.number_of_nodes() < 300:
                 # when medium young, we want mostly extension
                 BP_state = branch_probability / 10
             else:
@@ -677,14 +679,10 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
                 keep_adding = False
                 break
             
-            if make_video:
-                color_plot_walk(G)
-
-        # frame = 50
-        # if level_num % frame == 1:
-        #     color_plot_walk(G, 'gifs/s_' + str(stretch_factor) + \
-        #                     '_b_' +  str(branch_probability) + '_x' + str(frame) + '/' + str(level_num))
-
+            # the frame_interval makes the video more GIF-y
+            if make_video and level_num % frame_interval == 0:
+                color_plot_walk(G, frame_index)
+                frame_index += 1
 
     return G
 
@@ -890,7 +888,7 @@ def plot_walk(G, sensitivity_radius, max_occupancy, latency_dist, savename, dlim
     #nx.write_gpickle(G, savename + "_saved.gpickle")
 
 # the following function was copied over from test_trees.py and modified
-def color_plot_walk(G):
+def color_plot_walk(G, frame_index):
 
     fig, ax = plt.subplots(figsize=(2, 2))
 
@@ -941,8 +939,8 @@ def color_plot_walk(G):
     
     plt.show()
     
-    file_name = f'frames/frame_{G.number_of_nodes():d}'
+    file_name = f'frames/frame_{frame_index:d}'
     fig.savefig(file_name, dpi=300, bbox_inches='tight')
-
+    
     plt.close()
 

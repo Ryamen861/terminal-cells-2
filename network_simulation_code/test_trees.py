@@ -7,6 +7,7 @@ import pandas as pd
 import time
 import seaborn as sns
 import ffmpeg
+import os, shutil
 
 from generate_networks import BSARW
 from helpers import get_coarsened_edge_lengths, compute_void, total_edge_length, get_num_coarsened_edges
@@ -123,18 +124,26 @@ for rep in range(reps):
     
     with open("final_images_3D/index.txt", "r") as file:
         index = int(file.read())
-
+        
+    with open("final_images_3D/index.txt", "w") as file:
+        file.write(str(index + 1))
+        
     #### Turn video frames into video
     if make_video:
         video_filename = f'Video/simulation_{s}_{b}_3D_{index}.mp4'
         
         ffmpeg\
-            .input('frames/frame_%d.png', start_number=initial_length + 2)\
+            .input('frames/frame_%d.png', start_number=0)\
             .output(video_filename,
                     vcodec='mpeg4',
                     r=str(frame_rate),
                     video_bitrate='8000k')\
             .run(overwrite_output=True)
+
+    # delete the frames after making video
+    for filename in os.listdir("frames"):
+        file_path = os.path.join(f"frames/{filename}")
+        os.remove(file_path)
         
     B = get_num_coarsened_edges(G)
     print('number of branches:', B)
@@ -159,10 +168,6 @@ for rep in range(reps):
 
     if not make_video:
         savename = 'final_images_3D/N_' + str(size) + '_s_' + str(s) + '_b_' + str(b) + '_' + str(index)
-        
-        with open("final_images_3D/index.txt", "w") as file:
-            file.write(str(index + 1))
-        
         color_plot_walk(G, savename)
 
     print('size:', G.number_of_nodes(), 'total length:', round(total_edge_length(G), 2))
