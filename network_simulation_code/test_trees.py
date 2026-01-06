@@ -76,7 +76,7 @@ all_As = []
 all_Ls = []
 
 
-reps = 2
+reps = 1
 
 size_distribution = np.random.normal(800, 200, reps)
 

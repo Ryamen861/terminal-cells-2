@@ -633,17 +633,7 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
             #print(len(cands1), len(cands2))
 
             if random() < branch_probability and len(cands2) > 0:
-                
-                # find the first instance of node with level = 0 (made by initialization)
-                if G.number_of_nodes() / max_size <= GROWTH_FRACTION:
-                    # if we are a certain fraction of the way fully growed
-                    for node in cands2:
-                        if G.nodes()[node]["level"] == 0:
-                            dock = node
-                            break
-                    
-                else:
-                    dock = cands2.pop()
+                dock = cands2.pop()
                 
                 G, edge_added = new_edge(G, dock, elen, level_num, point_tree)
                 # in this case, we would be branching
