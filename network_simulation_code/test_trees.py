@@ -55,7 +55,7 @@ def color_plot_walk(G, savename):
 
     plt.axis([xcent - lim, xcent + lim, ycent - lim, ycent + lim])
     plt.gca().set_aspect('equal', adjustable='box')
-    plt.axis('off')
+    plt.axis('on')
 
     plt.savefig(savename + '.pdf', bbox_inches='tight')
     plt.close()
@@ -107,6 +107,9 @@ b = 0.055
 
 print('s:', s, 'b:', b)
 
+make_video = True
+initial_length = 30
+
 
 # video variables
 frame_rate = 24
@@ -116,33 +119,23 @@ for rep in range(reps):
     print('size:', size)
 
     G = BSARW(size, elen, branch_probability = b, stretch_factor = s,
-                       initial_len = 20, init = 'line', right_side_only = True)
+                       initial_len = initial_length, init = 'line', right_side_only = True, make_video=make_video)
     
-    # turn on for individual images stored in "final_images_3D" folder
     with open("final_images_3D/index.txt", "r") as file:
         index = int(file.read())
 
-    savename = 'final_images_3D/N_' + str(size) + '_s_' + str(s) + '_b_' + str(b) + '_' + str(index)
-    
-    with open("final_images_3D/index.txt", "w") as file:
-        file.write(str(index + 1))
-    
     #### Turn video frames into video
-    
-    
-    # video_filename = f'Video/simulation_{s}_{b}_3D_{index}.mp4'
-    
-    # ffmpeg\
-    #     .input('frames/frame_%d.png', start_number=32)\
-    #     .output(video_filename,
-    #             vcodec='mpeg4',
-    #             r=str(frame_rate),
-    #             video_bitrate='8000k')\
-    #     .run(overwrite_output=True)
+    if make_video:
+        video_filename = f'Video/simulation_{s}_{b}_3D_{index}.mp4'
         
+        ffmpeg\
+            .input('frames/frame_%d.png', start_number=initial_length + 2)\
+            .output(video_filename,
+                    vcodec='mpeg4',
+                    r=str(frame_rate),
+                    video_bitrate='8000k')\
+            .run(overwrite_output=True)
         
-    # ####
-
     B = get_num_coarsened_edges(G)
     print('number of branches:', B)
 
@@ -164,7 +157,13 @@ for rep in range(reps):
 
     #plot_walk(G, sensitivity_radius, max_occupancy, latency_dist, savename, node_opts = True)
 
-    color_plot_walk(G, savename) # turn this on when you want just the final picture
+    if not make_video:
+        savename = 'final_images_3D/N_' + str(size) + '_s_' + str(s) + '_b_' + str(b) + '_' + str(index)
+        
+        with open("final_images_3D/index.txt", "w") as file:
+            file.write(str(index + 1))
+        
+        color_plot_walk(G, savename)
 
     print('size:', G.number_of_nodes(), 'total length:', round(total_edge_length(G), 2))
 

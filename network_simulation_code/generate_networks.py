@@ -540,7 +540,7 @@ def initialize_tri(initial_length, elen):
 box_lims = [0, 60, -10, 20]
 
 def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 'tri', max_deg = 3, 
-          initial_len = 75, right_side_only = False, get_intermediate_vals = False):
+          initial_len = 75, right_side_only = False, get_intermediate_vals = False, make_video=False):
 
     stay_in_box = True
     stay_in_box = False
@@ -572,6 +572,7 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
     keep_adding = True
 
     while G.number_of_nodes() <= max_size and keep_adding:
+        print(G.number_of_nodes())
         # this while loop branches/extends the graph until it has reached max size
 
         #f = 0.75
@@ -631,8 +632,37 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
         while not edge_added:
 
             #print(len(cands1), len(cands2))
+            
+            '''
+            # find the first instance of node with level = 0 (made by initialization)
+            if G.number_of_nodes() / max_size <= GROWTH_FRACTION:
+                # if we are a certain fraction of the way fully growed
+                for node in cands2:
+                    if G.nodes()[node]["level"] == 0:
+                        dock = node
+                        break
+                
+            else:
+                dock = cands2.pop()                
+            
+            '''
 
-            if random() < branch_probability and len(cands2) > 0:
+            # the following block of if-statements makes it so that while we are still "young"
+            # we focus more on extension than budding
+            
+            # BP_state is the branch probability based on the state (state as in young or old)
+            if G.number_of_nodes() < 60:
+                # when very young, we want some branching
+                BP_state = branch_probability * 2 # make this less than one?
+            elif G.number_of_nodes() < 200:
+                # when medium young, we want mostly extension
+                BP_state = branch_probability / 10
+            else:
+                # # when older, we want regular growth
+                BP_state = branch_probability
+                
+            # this actually decides whether to bud or extend
+            if random() < BP_state and len(cands2) > 0:
                 dock = cands2.pop()
                 
                 G, edge_added = new_edge(G, dock, elen, level_num, point_tree)
@@ -647,7 +677,8 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
                 keep_adding = False
                 break
             
-            # color_plot_walk(G) # turn on for video making
+            if make_video:
+                color_plot_walk(G)
 
         # frame = 50
         # if level_num % frame == 1:
@@ -906,7 +937,7 @@ def color_plot_walk(G):
 
     plt.axis([xcent - lim, xcent + lim, ycent - lim, ycent + lim])
     plt.gca().set_aspect('equal', adjustable='box')
-    plt.axis('off')
+    plt.axis('on')
     
     plt.show()
     
