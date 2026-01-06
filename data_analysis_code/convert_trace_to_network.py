@@ -373,4 +373,4 @@ def process_time_lapse():
 	# dataframe = pd.DataFrame(info_dict, columns=['number', 'instar', 'side', 'Tr', 'tree'])
 	# pickle.dump(dataframe, open(top_dir + 'hybrid_mCherry_TCs_raw.p', "wb"))
 
-process_time_lapse()
+# process_time_lapse()
