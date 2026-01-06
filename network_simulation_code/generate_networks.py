@@ -2,6 +2,7 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 import sys
+import math
 from random import uniform, shuffle, random, choice
 import scipy.spatial as spatial
 from matplotlib import patches
@@ -11,6 +12,7 @@ import scipy as sci
 
 # constants
 EPSILON = sys.float_info.epsilon
+GROWTH_FRACTION = 1/4
 
 # below are 2D intersection finders
 # # intersection helper
@@ -112,7 +114,7 @@ def intersect(A, B, C, D, elen):
 # add new edge to node n with length elen and angle drawn from a distribution
 def new_edge(G, n, elen, lev, point_tree, override = False):
 
-    alpha1, alpha2 = get_alphas(G, n)
+    alpha1, alpha2 = get_alphas(G, n, point_tree, elen)
 
     # if override:
     #     buffer = np.pi / 16
@@ -132,7 +134,6 @@ def new_edge(G, n, elen, lev, point_tree, override = False):
          np.sin(new_phi) * np.sin(new_theta),
          np.cos(new_phi)]
         )
-    
     
     G.add_node(m, theta=new_theta, phi=new_phi, level = lev,
                coords = G.nodes[n]['coords'] + delta_coords)
@@ -160,7 +161,7 @@ def new_edge(G, n, elen, lev, point_tree, override = False):
                     success = False
 
     # if the new edge has overlaps, it is removed and the
-    # dock node is not chosen as a candidate again
+    # dock node is not chosen as a candidate again # I'm not sure if this is a true statement
     if not success:
         G.remove_node(m)
 
@@ -232,34 +233,158 @@ def new_long_edge(G, n, elen, lev, point_tree):
 
     return G
 
-# pick a persistent angle for tips extension and a random angle for side budding
-def get_alphas(G, n):
-    '''Returns a tuple of random (theta, phi).
-    The theta depends on whether or not the given node is capable of branching.
-    If you want to implement self-avoidance, this is the place to do it, maybe with the help of a point-tree'''
+def check_floating_point_error(to_be_arccosed):
+    if to_be_arccosed > 1:
+        if math.isclose(to_be_arccosed, 1):
+            return 1
+        else:
+            print("Then we got a real problem")
+    else:
+        return to_be_arccosed
+    
+def is_downward_growth(prev_vector, d_vector, for_theta: bool, elen):
+    '''Given a previous vector (node -1 to -0) and new direction vector (0 to 1, also defined as the sum of neighboring vectors),
+    gives whether the new node creates a vector with the 0 node that points up or down, with the previous vector on the x-axis.
+    
+    In other words, finds relative slope of two added vectors
+    
+    Returns:
+        
+        if positive slope:    True
+        if negative slope:    False
+        if zero slope:        None'''
+        
+    result = None
+        
+    second_index = 1 if for_theta else 2 # deciding whether to use y or z for finding theta or phi
+    
+    a = prev_vector[0]
+    b = prev_vector[second_index]
+    
+    if a == 0 and b == 0:
+        # if this is the case, the coeff_matrix made will be singular
+        if for_theta:
+            if d_vector[0] > 0:
+                result = True
+            else:
+                result = False
+        else:
+            if d_vector[0] < 0:
+                result = True
+            else:
+                result = False
+        
+        return result
+    
+    else:
+        # if the coeff_matrix is not a problem
+        coeff_matrix = np.array([
+            [a, -b],
+            [b, a]
+            ])
+        
+        ordinate_matrix = np.array([
+            [elen],
+            [0]
+            ])
+        
+        results = np.linalg.solve(coeff_matrix, ordinate_matrix)
+        cos_theta = results[0][0]
+        sin_theta = results[1][0]
+    
+        # figure out rotated coords of d_vector
+        c = d_vector[0]
+        d = d_vector[second_index]
+        
+        new_x = c * cos_theta - d * sin_theta
+        new_y = c * sin_theta + d * cos_theta
+            
+        if new_y / new_x < 0:
+            result = True
+        else:
+            # if it is positive or zero, just return False and we will do nothing about it
+            result = False
+        
+        if not for_theta:
+            # if the angle calcuation is for phi, phi going down is actually a positive addition to the current angle
+            return not result
+        else:
+            return result
 
-    # buffer = np.pi / 16
+# pick a persistent angle for tips extension and a random angle for side budding
+def get_alphas(G, n, point_tree, elen):
+    '''Returns a tuple of random (theta, phi).
+    The theta depends on whether or not the given node is capable of branching.'''
+
+    buffer = 1 / 8
     # spread = 1  # 5
     # # spread = 10
 
     theta_1 = np.pi / 9
+    
+    neibs = point_tree.query_ball_point(G.nodes[n]['coords'], 2.5*elen) # 2 or 3 elen seems ok
+            # however, bigger coefficient makes it more frivoly and less branchy/more longer single branches
+
+    terminal_point = G.nodes[n]["coords"]
+    final_vector = np.array([0.0, 0.0, 0.0])
+    
+    # add up all the vectors pointing from neighbors to current node about to bud/extend
+    for node in neibs:
+        initial_point = np.array(G.nodes[node]["coords"])
+        new_vector = terminal_point - initial_point
+        final_vector += new_vector
+
+    # make the reference vector
+    prev_node = list(G.neighbors(n))[0] # if the node whose direction we are determining right now is 1, the -1 node
+    growing_node_coords = np.array(G.nodes[prev_node]["coords"])
+    comp_vector = terminal_point - growing_node_coords # -1 to 0 node vector, will be used to compare to final_vector to find theta
+    
+    # make two 2D vectors, now can use dot product to find theta
+    d_vector_2d = np.array([comp_vector[0], comp_vector[1]])
+    f_vector_2d = np.array([final_vector[0], final_vector[1]])
+    
+    # must check for a floating point error (sometimes it comes out 1.0000000000000002 and makes arccos error)
+    to_be_arccosed = np.dot(d_vector_2d, f_vector_2d) / (np.linalg.norm(d_vector_2d) * np.linalg.norm(f_vector_2d))
+    to_be_arccosed = check_floating_point_error(to_be_arccosed)
+    
+    avoiding_theta = np.arccos(to_be_arccosed)
+
+    # find phi, but now using the x and z components for the 2d vectors
+    d_vector_2d = np.array([comp_vector[0], comp_vector[2]]) 
+    f_vector_2d = np.array([final_vector[0], final_vector[2]])
+    
+    # check for floating point error
+    to_be_arccosed = np.dot(d_vector_2d, f_vector_2d) / (np.linalg.norm(d_vector_2d) * np.linalg.norm(f_vector_2d))
+    to_be_arccosed = check_floating_point_error(to_be_arccosed)
+    
+    avoiding_phi = np.arccos(to_be_arccosed)
+    
+    # however, the dot products only give positive angles, but in reality, they could be -/+
+    # with the framework we decided on, so the following function will give the sign of the angles
+    if is_downward_growth(comp_vector, final_vector, True, elen):
+        avoiding_theta *= -1
+    if is_downward_growth(comp_vector, final_vector, False, elen):
+        avoiding_phi *= -1
+        
+    # but a lot of the time, alpha1 and alpha2 are zero because they're just chilling, no nearby nodes to avoid
+    # but as they branch, there's got be some level of randomness
+    # so I think it would be a good idea to combine this angle with a random angle
+    # there are probably many different ways to "combine" two angles (even a distriution could be set up)
+    # but just adding them could be a possible good approximation, so I will try that
 
     if G.degree(n) == 1:
-        # pick angle for side budding
-        
-        # alpha = uniform(-spread * buffer, spread * buffer)
+        # pick angle for extension        
         alpha1 = uniform(-theta_1, theta_1)
     else:
-        # pick angle for tip extension
+        # pick angle for budding
+        alpha1 = np.random.choice([-1, 1]) * np.pi / 3 # decided by looking at example data
         
-        # pick up or down sprouting direction by the sign
-        #alpha = np.random.choice([-1, 1]) * uniform(np.pi / 2 - spread * buffer, np.pi / 2 + spread * buffer)
-
-        alpha1 = np.random.choice([-1, 1]) * np.pi / 2
+    avoiding_theta *= buffer
+    avoiding_phi *= buffer
 
     alpha2 = uniform(-np.pi / 128, np.pi / 128)
-
-    return (alpha1, alpha2)
+    
+    return (alpha1 + avoiding_theta, alpha2 + avoiding_phi)
 
 # get number of nodes within radius r of node n
 def get_node_occupancy(G, n, r, point_tree):
@@ -371,7 +496,7 @@ def initialize_tri(initial_length, elen):
         new_phi = uniform(-np.pi / 128, np.pi / 128)
         
         # add a node at tips of mercedes benz star symbol
-        new_coords = elen * np.array(np.sin(new_phi) * np.cos(new_theta), np.sin(new_phi) * np.sin(new_theta), np.cos(new_phi))
+        new_coords = elen * np.array([np.sin(new_phi) * np.cos(new_theta), np.sin(new_phi) * np.sin(new_theta), np.cos(new_phi)])
         G.add_node(i, coords=new_coords, theta=new_theta, phi=new_phi, level = 0)
         G.add_edge(0, i, level=0, length=elen)
 
@@ -456,7 +581,7 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
         box_lims = [0, W, -H/4, 3*H/4]
 
         level_num += 1
-
+        
         if get_intermediate_vals:
             intermediate_Ls.append(total_edge_length(G))
             intermediate_As.append(convex_hull_area(G))
@@ -495,8 +620,10 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
 
         edge_added = False
 
-        # option to not let new branches form at the base
-        if right_side_only:
+        # option to not let new branches form at the root node
+        if right_side_only and init == "line":
+            # this doesn't need to be considered for tri initialization because
+            # the root node already has more than enough branches already (degree > 2)
             cands1.remove(0) # gets rid of node 0, the root node
 
         # go through list of candidate docks until one that fits all
@@ -507,6 +634,7 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
 
             if random() < branch_probability and len(cands2) > 0:
                 dock = cands2.pop()
+                
                 G, edge_added = new_edge(G, dock, elen, level_num, point_tree)
                 # in this case, we would be branching
             elif len(cands1) > 0:
@@ -519,7 +647,7 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
                 keep_adding = False
                 break
             
-            color_plot_walk(G) # turn on for video making
+            # color_plot_walk(G) # turn on for video making
 
         # frame = 50
         # if level_num % frame == 1:

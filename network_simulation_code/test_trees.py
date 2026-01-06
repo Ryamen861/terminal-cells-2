@@ -76,7 +76,7 @@ all_As = []
 all_Ls = []
 
 
-reps = 10
+reps = 1
 
 size_distribution = np.random.normal(800, 200, reps)
 
@@ -116,27 +116,30 @@ for rep in range(reps):
     print('size:', size)
 
     G = BSARW(size, elen, branch_probability = b, stretch_factor = s,
-                       initial_len = 30, init = 'line', right_side_only = True)
+                       initial_len = 20, init = 'line', right_side_only = True)
     
     # turn on for individual images stored in "final_images_3D" folder
-    # with open("final_images_3D/index.txt", "r") as file:
-    #     index = int(file.read())
+    with open("final_images_3D/index.txt", "r") as file:
+        index = int(file.read())
 
-    # savename = 'final_images_3D/N_' + str(size) + '_s_' + str(s) + '_b_' + str(b) + '_' + str(index)
+    savename = 'final_images_3D/N_' + str(size) + '_s_' + str(s) + '_b_' + str(b) + '_' + str(index)
     
-    # with open("final_images_3D/index.txt", "w") as file:
-    #     file.write(str(index + 1))
+    with open("final_images_3D/index.txt", "w") as file:
+        file.write(str(index + 1))
     
     #### Turn video frames into video
-    video_filename = f'Video/simulation_{size}_{s}_{b}_1_IN_3D.mp4'
     
-    ffmpeg\
-        .input('frames/frame_%d.png', start_number=32)\
-        .output(video_filename,
-                vcodec='mpeg4',
-                r=str(frame_rate),
-                video_bitrate='8000k')\
-        .run(overwrite_output=True)
+    
+    # video_filename = f'Video/simulation_{s}_{b}_3D_{index}.mp4'
+    
+    # ffmpeg\
+    #     .input('frames/frame_%d.png', start_number=32)\
+    #     .output(video_filename,
+    #             vcodec='mpeg4',
+    #             r=str(frame_rate),
+    #             video_bitrate='8000k')\
+    #     .run(overwrite_output=True)
+        
         
     # ####
 
@@ -161,7 +164,7 @@ for rep in range(reps):
 
     #plot_walk(G, sensitivity_radius, max_occupancy, latency_dist, savename, node_opts = True)
 
-    # color_plot_walk(G, savename) # turn this on when you want just the final picture
+    color_plot_walk(G, savename) # turn this on when you want just the final picture
 
     print('size:', G.number_of_nodes(), 'total length:', round(total_edge_length(G), 2))
 
@@ -211,7 +214,7 @@ for rep in range(reps):
     #           + str(latency_dist) + '_' + str(rep) + '.gpickle')
 
     #nx.write_gpickle(G, 'corals/N_12_L_20_line.gpickle')
-
+    
 t2 = time.time()
 
 print(round(t2-t1, 2))
