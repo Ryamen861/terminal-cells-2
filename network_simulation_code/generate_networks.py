@@ -593,7 +593,6 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
             # xspans.append(spans[0])
             # yspans.append(spans[1])
 
-
         point_tree = spatial.cKDTree(list(nx.get_node_attributes(G, 'coords').values()))
         # later used to find points within a distance of a node
 
