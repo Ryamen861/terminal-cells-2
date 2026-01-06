@@ -3,5 +3,6 @@ Alison G. Simpkins, Tanner Simpson, Lena A. Barrett, Pauline Hansen, Stanislav Y
 
 This repository is a forked version just for me to learn.
 
-It implements:
+It implements (somewhat):
 - 3D network simulation
+- Self Avoidance
