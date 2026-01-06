@@ -108,7 +108,7 @@ b = 0.055
 
 print('s:', s, 'b:', b)
 
-make_video = True
+make_video = False
 initial_length = 30
 
 

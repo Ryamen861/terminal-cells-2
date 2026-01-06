@@ -239,6 +239,11 @@ def check_floating_point_error(to_be_arccosed):
             return 1
         else:
             print("Then we got a real problem")
+    elif to_be_arccosed < -1:
+        if math.isclose(to_be_arccosed, -1):
+            return -1
+        else:
+            print("Then we got a real problem")
     else:
         return to_be_arccosed
     
@@ -310,11 +315,66 @@ def is_downward_growth(prev_vector, d_vector, for_theta: bool, elen):
             return not result
         else:
             return result
+        
+def find_angles(comp_vector, final_vector, elen):
+    # make two 2D vectors, now can use dot product to find theta
+    d_vector_2d = np.array([comp_vector[0], comp_vector[1]])
+    f_vector_2d = np.array([final_vector[0], final_vector[1]])
+    
+    # must check for a floating point error (sometimes it comes out 1.0000000000000002 and makes arccos error)
+    to_be_arccosed = np.dot(d_vector_2d, f_vector_2d) / (np.linalg.norm(d_vector_2d) * np.linalg.norm(f_vector_2d))
+    to_be_arccosed = check_floating_point_error(to_be_arccosed)
+    
+    print(f"flag one: {to_be_arccosed}")
+    theta = np.arccos(to_be_arccosed)
 
-# pick a persistent angle for tips extension and a random angle for side budding
+    # find phi, but now using the x and z components for the 2d vectors
+    d_vector_2d = np.array([comp_vector[0], comp_vector[2]]) 
+    f_vector_2d = np.array([final_vector[0], final_vector[2]])
+    
+    # check for floating point error
+    to_be_arccosed = np.dot(d_vector_2d, f_vector_2d) / (np.linalg.norm(d_vector_2d) * np.linalg.norm(f_vector_2d))
+    to_be_arccosed = check_floating_point_error(to_be_arccosed)
+    
+    print(f"flag two: {to_be_arccosed}")
+    phi = np.arccos(to_be_arccosed)
+    
+    # however, the dot products only give positive angles, but in reality, they could be -/+
+    # with the framework we decided on, so the following function will give the sign of the angles
+    if is_downward_growth(comp_vector, final_vector, True, elen):
+        theta *= -1
+    if is_downward_growth(comp_vector, final_vector, False, elen):
+        phi *= -1
+        
+    return theta, phi
+        
+def x_grad(x):
+    return -x
+    # return 5
+
+def y_grad(y):
+    return -y
+
+def z_grad(z):
+    return -z
+
+def weighted(angles, target_angle, weight_amount):
+    '''Take three angles, one of them  (target_angle) being the angle you want the final angle to be more like.
+    Bigger weight_amount gives the target angle more influence, more your final angle will be like it'''
+    avg = np.mean(angles)
+    to_be_waveraged = np.array([avg]) # waveraged is weighted average
+
+    for _ in range(weight_amount):
+        to_be_waveraged = np.append(to_be_waveraged, target_angle)
+        
+    return np.mean(to_be_waveraged)
+
+# pick angle for tips extension and a random angle for side budding
 def get_alphas(G, n, point_tree, elen):
     '''Returns a tuple of random (theta, phi).
-    The theta depends on whether or not the given node is capable of branching.'''
+    The theta depends on whether or not the given node is capable of branching.
+    
+    Takes into account other nodes (self-avoiding) and the Bnl gradient given by muscle tissue'''
 
     buffer = 1 / 8
     # spread = 1  # 5
@@ -322,6 +382,7 @@ def get_alphas(G, n, point_tree, elen):
 
     theta_1 = np.pi / 9
     
+    #### self avoiding
     neibs = point_tree.query_ball_point(G.nodes[n]['coords'], 2.5*elen) # 2 or 3 elen seems ok
             # however, bigger coefficient makes it more frivoly and less branchy/more longer single branches
 
@@ -336,42 +397,40 @@ def get_alphas(G, n, point_tree, elen):
 
     # make the reference vector
     prev_node = list(G.neighbors(n))[0] # if the node whose direction we are determining right now is 1, the -1 node
-    growing_node_coords = np.array(G.nodes[prev_node]["coords"])
+    growing_node_coords = np.array(G.nodes[prev_node]["coords"]) # this is the one that is about to branch
     comp_vector = terminal_point - growing_node_coords # -1 to 0 node vector, will be used to compare to final_vector to find theta
     
-    # make two 2D vectors, now can use dot product to find theta
-    d_vector_2d = np.array([comp_vector[0], comp_vector[1]])
-    f_vector_2d = np.array([final_vector[0], final_vector[1]])
-    
-    # must check for a floating point error (sometimes it comes out 1.0000000000000002 and makes arccos error)
-    to_be_arccosed = np.dot(d_vector_2d, f_vector_2d) / (np.linalg.norm(d_vector_2d) * np.linalg.norm(f_vector_2d))
-    to_be_arccosed = check_floating_point_error(to_be_arccosed)
-    
-    avoiding_theta = np.arccos(to_be_arccosed)
-
-    # find phi, but now using the x and z components for the 2d vectors
-    d_vector_2d = np.array([comp_vector[0], comp_vector[2]]) 
-    f_vector_2d = np.array([final_vector[0], final_vector[2]])
-    
-    # check for floating point error
-    to_be_arccosed = np.dot(d_vector_2d, f_vector_2d) / (np.linalg.norm(d_vector_2d) * np.linalg.norm(f_vector_2d))
-    to_be_arccosed = check_floating_point_error(to_be_arccosed)
-    
-    avoiding_phi = np.arccos(to_be_arccosed)
-    
-    # however, the dot products only give positive angles, but in reality, they could be -/+
-    # with the framework we decided on, so the following function will give the sign of the angles
-    if is_downward_growth(comp_vector, final_vector, True, elen):
-        avoiding_theta *= -1
-    if is_downward_growth(comp_vector, final_vector, False, elen):
-        avoiding_phi *= -1
+    # find the angles
+    avoiding_theta, avoiding_phi = find_angles(comp_vector, final_vector, elen)
         
+    avoiding_theta *= buffer
+    avoiding_phi *= buffer
+
+    #### Gradient influence
+    comp_funcs = [x_grad, y_grad, z_grad]
+    grad_vector = np.array([])
+    
+    for i in range(3):
+        x = comp_vector[i]
+        func = comp_funcs[i]
+        
+        new_grad = func(x)
+        grad_vector = np.append(grad_vector, new_grad)
+                
+    # adjust the vector
+    grad_vector += comp_vector
+    normalized = grad_vector / np.linalg.norm(grad_vector)
+    to_scale = normalized * elen
+        
+    grad_theta, grad_phi = find_angles(comp_vector, to_scale, elen)
+
     # but a lot of the time, alpha1 and alpha2 are zero because they're just chilling, no nearby nodes to avoid
     # but as they branch, there's got be some level of randomness
     # so I think it would be a good idea to combine this angle with a random angle
     # there are probably many different ways to "combine" two angles (even a distriution could be set up)
     # but just adding them could be a possible good approximation, so I will try that
-
+    
+    # generate the random component to new angles
     if G.degree(n) == 1:
         # pick angle for extension        
         alpha1 = uniform(-theta_1, theta_1)
@@ -379,12 +438,13 @@ def get_alphas(G, n, point_tree, elen):
         # pick angle for budding
         alpha1 = np.random.choice([-1, 1]) * np.pi / 3 # decided by looking at example data
         
-    avoiding_theta *= buffer
-    avoiding_phi *= buffer
-
     alpha2 = uniform(-np.pi / 128, np.pi / 128)
     
-    return (alpha1 + avoiding_theta, alpha2 + avoiding_phi)
+    ############### dont forget to add the scaled grad theta and phi
+    thetas = np.array([alpha1, avoiding_theta, grad_theta])
+    phis = np.array([alpha2, avoiding_phi, grad_phi])
+    
+    return weighted(thetas, grad_theta, 1), weighted(phis, grad_phi, 1)
 
 # get number of nodes within radius r of node n
 def get_node_occupancy(G, n, r, point_tree):
