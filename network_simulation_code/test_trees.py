@@ -6,6 +6,7 @@ import pickle
 import pandas as pd
 import time
 import seaborn as sns
+import ffmpeg
 
 from generate_networks import BSARW
 from helpers import get_coarsened_edge_lengths, compute_void, total_edge_length, get_num_coarsened_edges
@@ -21,17 +22,20 @@ def color_plot_walk(G, savename):
     palette = sns.dark_palette("red", maxLevel, reverse=True)
 
     for e in G.edges(data=True):
-
-        #print(e, e[2]['level'])
-
+        # e is a tuple that looks like this:
+        # (node_connected_by_edge, other_node_connected_by_edge, dict_of_attributes)
+        # the dictionary holds level, length, and ange information
+        
+        # find the coordinates of the two nodes connected by this edge
         c0 = G.nodes[e[0]]['coords']
         c1 = G.nodes[e[1]]['coords']
 
+        # the level gives index for RGB value
         c = palette[e[2]['level']]
         if e[2]['level'] == 0:
+            # if the level is zero, then make it blue
+            # reminder: nodes of level zero are ones made in the initialization
              c = 'b'
-
-        #c = 'k'
 
         plt.plot([c0[0], c1[0]], [c0[1], c1[1]], color=c, linewidth = .5)
 
@@ -72,7 +76,7 @@ all_As = []
 all_Ls = []
 
 
-reps = 3
+reps = 1
 
 size_distribution = np.random.normal(800, 200, reps)
 
@@ -80,37 +84,64 @@ size_distribution = np.random.normal(800, 200, reps)
 size = 1000
 
 
-b = .5
-s = 1.001
+# b = .5
+# s = 1.001
 
-b = 0.1
-s = 1.0007
+# b = 0.1
+# s = 1.0007
 
-b = 0.007
-s = 1.0002
+# b = 0.007
+# s = 1.0002
 
 # b = 0.007
 # s = 1.0001
 
-s = 0.001
-b = 0.02
+# s = 0.001
+# b = 0.02
 
 s = 0.0007
 b = 0.055
 
-s = 0.0001
-b = 0.0001
+# s = 0.0001
+# b = 0.0001
 
 print('s:', s, 'b:', b)
+
+
+# video variables
+frame_rate = 24
 
 for rep in range(reps):
 
     print('size:', size)
 
     G = BSARW(size, elen, branch_probability = b, stretch_factor = s,
-                       initial_len = 30, init = 'line', right_side_only = True)
+                       initial_len = 20, init = 'line', right_side_only = True)
+    
+    # turn on for individual images stored in "final_images_3D" folder
+    with open("final_images_3D/index.txt", "r") as file:
+        index = int(file.read())
 
-    savename = 'networks/N_' + str(size) + '_s_' + str(s) + '_b_' + str(b) + '_' + str(rep)
+    savename = 'final_images_3D/N_' + str(size) + '_s_' + str(s) + '_b_' + str(b) + '_' + str(index)
+    
+    with open("final_images_3D/index.txt", "w") as file:
+        file.write(str(index + 1))
+    
+    #### Turn video frames into video
+    
+    
+    # video_filename = f'Video/simulation_{s}_{b}_3D_{index}.mp4'
+    
+    # ffmpeg\
+    #     .input('frames/frame_%d.png', start_number=32)\
+    #     .output(video_filename,
+    #             vcodec='mpeg4',
+    #             r=str(frame_rate),
+    #             video_bitrate='8000k')\
+    #     .run(overwrite_output=True)
+        
+        
+    # ####
 
     B = get_num_coarsened_edges(G)
     print('number of branches:', B)
@@ -120,13 +151,20 @@ for rep in range(reps):
     # print(degs.count(2))
     # print(degs.count(3))
     # print('number of branches:', B, degs.count(1) + degs.count(3) - 1)
-
+    
+    
+    
+    # analyze the range of z values
+    coords = nx.get_node_attributes(G, "coords").values()
+    xs = [i[0] for i in coords]
+    ys = [i[1] for i in coords]
+    zs = [i[2] for i in coords]
 
     plt.clf()
 
     #plot_walk(G, sensitivity_radius, max_occupancy, latency_dist, savename, node_opts = True)
 
-    color_plot_walk(G, savename)
+    color_plot_walk(G, savename) # turn this on when you want just the final picture
 
     print('size:', G.number_of_nodes(), 'total length:', round(total_edge_length(G), 2))
 
@@ -176,7 +214,7 @@ for rep in range(reps):
     #           + str(latency_dist) + '_' + str(rep) + '.gpickle')
 
     #nx.write_gpickle(G, 'corals/N_12_L_20_line.gpickle')
-
+    
 t2 = time.time()
 
 print(round(t2-t1, 2))
