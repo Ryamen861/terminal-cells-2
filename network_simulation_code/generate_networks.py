@@ -13,6 +13,11 @@ import scipy as sci
 # constants
 EPSILON = sys.float_info.epsilon
 GROWTH_FRACTION = 1/4
+MUSCLE_COORDS = [
+    (120, 0, 0),
+    (70, 100, 0),
+    # (70, -100, 0)
+    ]
 
 # below are 2D intersection finders
 # # intersection helper
@@ -325,7 +330,6 @@ def find_angles(comp_vector, final_vector, elen):
     to_be_arccosed = np.dot(d_vector_2d, f_vector_2d) / (np.linalg.norm(d_vector_2d) * np.linalg.norm(f_vector_2d))
     to_be_arccosed = check_floating_point_error(to_be_arccosed)
     
-    print(f"flag one: {to_be_arccosed}")
     theta = np.arccos(to_be_arccosed)
 
     # find phi, but now using the x and z components for the 2d vectors
@@ -336,7 +340,6 @@ def find_angles(comp_vector, final_vector, elen):
     to_be_arccosed = np.dot(d_vector_2d, f_vector_2d) / (np.linalg.norm(d_vector_2d) * np.linalg.norm(f_vector_2d))
     to_be_arccosed = check_floating_point_error(to_be_arccosed)
     
-    print(f"flag two: {to_be_arccosed}")
     phi = np.arccos(to_be_arccosed)
     
     # however, the dot products only give positive angles, but in reality, they could be -/+
@@ -348,15 +351,19 @@ def find_angles(comp_vector, final_vector, elen):
         
     return theta, phi
         
-def x_grad(x):
-    return -x
-    # return 5
+# imagine the muscle fiber is at point (90, 0, 0)
 
-def y_grad(y):
-    return -y
-
-def z_grad(z):
-    return -z
+def find_grad(coords, translations):
+    x, y, z = tuple(coords)
+    a, b, c = tuple(translations)
+    
+    denom = x ** 2 + y ** 2 + z ** 2 + 0.01 # the 0.01 is an epsilon to avoid dividing by zero
+    
+    xc = - (x - a) / denom
+    yc = - (y - b) / denom
+    zc = - (z - c) / denom
+    
+    return np.array([xc, yc, zc])
 
 def weighted(angles, target_angle, weight_amount):
     '''Take three angles, one of them  (target_angle) being the angle you want the final angle to be more like.
@@ -407,22 +414,23 @@ def get_alphas(G, n, point_tree, elen):
     avoiding_phi *= buffer
 
     #### Gradient influence
-    comp_funcs = [x_grad, y_grad, z_grad]
-    grad_vector = np.array([])
+    grad_vector = np.array([0.0, 0.0, 0.0])
     
-    for i in range(3):
-        x = comp_vector[i]
-        func = comp_funcs[i]
-        
-        new_grad = func(x)
-        grad_vector = np.append(grad_vector, new_grad)
-                
+    for muscle_coord in MUSCLE_COORDS:
+        new_grad_vector = find_grad(growing_node_coords, muscle_coord)
+        grad_vector += new_grad_vector
+
     # adjust the vector
-    grad_vector += comp_vector
-    normalized = grad_vector / np.linalg.norm(grad_vector)
+    grad_vector = grad_vector / np.linalg.norm(grad_vector)
+    sum_vector = grad_vector + comp_vector
+    normalized = sum_vector / np.linalg.norm(sum_vector)
     to_scale = normalized * elen
-        
+            
     grad_theta, grad_phi = find_angles(comp_vector, to_scale, elen)
+    grad_theta *= buffer / 2
+    grad_phi *= buffer / 2
+    # should the strength of this ever be based on the current stage of growth/branching we are at at the moment?
+
 
     # but a lot of the time, alpha1 and alpha2 are zero because they're just chilling, no nearby nodes to avoid
     # but as they branch, there's got be some level of randomness
@@ -440,11 +448,7 @@ def get_alphas(G, n, point_tree, elen):
         
     alpha2 = uniform(-np.pi / 128, np.pi / 128)
     
-    ############### dont forget to add the scaled grad theta and phi
-    thetas = np.array([alpha1, avoiding_theta, grad_theta])
-    phis = np.array([alpha2, avoiding_phi, grad_phi])
-    
-    return weighted(thetas, grad_theta, 1), weighted(phis, grad_phi, 1)
+    return alpha1 + avoiding_theta + grad_theta, alpha2 + avoiding_phi + grad_phi
 
 # get number of nodes within radius r of node n
 def get_node_occupancy(G, n, r, point_tree):

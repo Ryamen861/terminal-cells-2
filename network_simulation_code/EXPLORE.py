@@ -5,4 +5,11 @@ from random import uniform, shuffle, random, choice
 import scipy as sci
 import math
 
-PHI_BOUND_VAR = 2
+
+my_arr = np.array([])
+my_arr = np.append(my_arr, [3, 4])
+
+new_arr = np.array([3, 4])
+
+print(new_arr, my_arr)
+my_arr += new_arr
