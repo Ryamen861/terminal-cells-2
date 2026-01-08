@@ -121,7 +121,7 @@ for rep in range(reps):
 
     G = BSARW(size, elen, branch_probability = b, stretch_factor = s,
                        initial_len = initial_length, init = 'line', right_side_only = True, make_video=make_video)
-    
+        
     with open("final_images_3D/index.txt", "r") as file:
         index = int(file.read())
         

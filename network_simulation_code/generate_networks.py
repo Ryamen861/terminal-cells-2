@@ -10,14 +10,28 @@ from helpers import total_edge_length, convex_hull_area, compute_void, number_of
 import seaborn as sns
 import scipy as sci
 
+randoms = []
+avoidings = []
+grads = []
+
 # constants
 EPSILON = sys.float_info.epsilon
 GROWTH_FRACTION = 1/4
-MUSCLE_COORDS = [
-    (120, 0, 0),
-    (70, 100, 0),
-    # (70, -100, 0)
-    ]
+
+MUSCLE_COORDS_S3 = [
+    (150, 0, 0),
+    (80, 80, 0),
+    (70, -120, 0)
+    ] # stage two will have three attractive muscles tissues
+
+BUFFER_S1 = 1 / 8
+BUFFER_S3 = 1 / 16
+
+S1_UPPER_LIMIT = 60
+S2_UPPER_LIMIT = 150
+
+THETA = np.pi / 25
+PHI = np.pi / 128
 
 # below are 2D intersection finders
 # # intersection helper
@@ -354,6 +368,7 @@ def find_angles(comp_vector, final_vector, elen):
 # imagine the muscle fiber is at point (90, 0, 0)
 
 def find_grad(coords, translations):
+        
     x, y, z = tuple(coords)
     a, b, c = tuple(translations)
     
@@ -378,6 +393,7 @@ def weighted(angles, target_angle, weight_amount):
 
 # pick angle for tips extension and a random angle for side budding
 def get_alphas(G, n, point_tree, elen):
+    # THETA= np.pi / 9
     '''Returns a tuple of random (theta, phi).
     The theta depends on whether or not the given node is capable of branching.
     
@@ -386,8 +402,6 @@ def get_alphas(G, n, point_tree, elen):
     buffer = 1 / 8
     # spread = 1  # 5
     # # spread = 10
-
-    theta_1 = np.pi / 9
     
     #### self avoiding
     neibs = point_tree.query_ball_point(G.nodes[n]['coords'], 2.5*elen) # 2 or 3 elen seems ok
@@ -416,19 +430,27 @@ def get_alphas(G, n, point_tree, elen):
     #### Gradient influence
     grad_vector = np.array([0.0, 0.0, 0.0])
     
-    for muscle_coord in MUSCLE_COORDS:
-        new_grad_vector = find_grad(growing_node_coords, muscle_coord)
-        grad_vector += new_grad_vector
-
-    # adjust the vector
-    grad_vector = grad_vector / np.linalg.norm(grad_vector)
-    sum_vector = grad_vector + comp_vector
-    normalized = sum_vector / np.linalg.norm(sum_vector)
-    to_scale = normalized * elen
-            
-    grad_theta, grad_phi = find_angles(comp_vector, to_scale, elen)
-    grad_theta *= buffer / 2
-    grad_phi *= buffer / 2
+    if G.number_of_nodes() > S2_UPPER_LIMIT:
+        MC = MUSCLE_COORDS_S3
+        buffer = BUFFER_S3
+    
+        for muscle_coord in MC:
+            new_grad_vector = find_grad(growing_node_coords, muscle_coord)
+            grad_vector += new_grad_vector
+    
+        # adjust the vector
+        grad_vector = grad_vector / np.linalg.norm(grad_vector)
+        sum_vector = grad_vector + comp_vector
+        normalized = sum_vector / np.linalg.norm(sum_vector)
+        to_scale = normalized * elen
+                
+        grad_theta, grad_phi = find_angles(comp_vector, to_scale, elen)
+        grad_theta *= buffer
+        grad_phi *= buffer
+    else:
+        grad_theta = 0
+        grad_phi = 0
+    
     # should the strength of this ever be based on the current stage of growth/branching we are at at the moment?
 
 
@@ -441,12 +463,16 @@ def get_alphas(G, n, point_tree, elen):
     # generate the random component to new angles
     if G.degree(n) == 1:
         # pick angle for extension        
-        alpha1 = uniform(-theta_1, theta_1)
+        alpha1 = uniform(-THETA, THETA)
     else:
         # pick angle for budding
         alpha1 = np.random.choice([-1, 1]) * np.pi / 3 # decided by looking at example data
         
-    alpha2 = uniform(-np.pi / 128, np.pi / 128)
+    alpha2 = uniform(-PHI, PHI)
+    
+    randoms.append((alpha1, alpha2)[0])
+    avoidings.append((avoiding_theta, avoiding_phi)[0])
+    grads.append((grad_theta, grad_phi)[0])
     
     return alpha1 + avoiding_theta + grad_theta, alpha2 + avoiding_phi + grad_phi
 
@@ -519,34 +545,66 @@ def initialize_line(initial_length, elen):
     G.add_edge(0, 1, level=0, length=elen)
 
     i = 1
-    
+        
     # add new nodes until we have reached the desired length
     while i < initial_length:
-        m = G.number_of_nodes()
-        # the number of nodes is the number the new node will take on, since we start from 0
-
-        # below with the alphas and deltas, we generate random delta and phi values
-
-        alpha = uniform(-np.pi / 64, np.pi / 64) # small random deviation
-        beta = G.nodes[i]['theta'] # get the angle of the latest node
-        new_theta = beta + alpha # add to get new theta
-
-        alpha2 = uniform(-np.pi / 128, np.pi / 128) # smaller range because tracheal cells are nearly flat
-        beta2 = G.nodes[i]['phi']
-        new_phi = alpha2 + beta2
-        # there is most defnitely a problem with adding pi/2 to phi. It only goes between pi/2 and pi
         
-        # create and connect the node with parameters made above
-        G.add_node(m, theta=new_theta, phi=new_phi, level = 0)
-        # using polar coordinates below, elen is our "roe"
-        G.nodes[m]['coords'] = (G.nodes[i]['coords'][0] + elen * np.sin(new_phi) * np.cos(new_theta),
-                                G.nodes[i]['coords'][1] + elen * np.sin(new_phi) * np.sin(new_theta),
-                                G.nodes[i]['coords'][2] + elen * np.cos(new_phi)
-                                )
+        if i < initial_length - 1:
+        
+            m = G.number_of_nodes()
+            # the number of nodes is the number the new node will take on, since we start from 0
+    
+            # below with the alphas and deltas, we generate random delta and phi values
+    
+            alpha = uniform(-THETA, THETA) # small random deviation
+            beta = G.nodes[i]['theta'] # get the angle of the latest node
+            new_theta = beta + alpha # add to get new theta
+    
+            alpha2 = uniform(-PHI, PHI) # smaller range because tracheal cells are nearly flat
+            beta2 = G.nodes[i]['phi']
+            new_phi = alpha2 + beta2
+            # there is most defnitely a problem with adding pi/2 to phi. It only goes between pi/2 and pi
+            
+            # create and connect the node with parameters made above
+            G.add_node(m, theta=new_theta, phi=new_phi, level = 0)
+            # using polar coordinates below, elen is our "roe"
+            G.nodes[m]['coords'] = (G.nodes[i]['coords'][0] + elen * np.sin(new_phi) * np.cos(new_theta),
+                                    G.nodes[i]['coords'][1] + elen * np.sin(new_phi) * np.sin(new_theta),
+                                    G.nodes[i]['coords'][2] + elen * np.cos(new_phi)
+                                    )
+    
+            G.add_edge(i, m, level=0, length=elen, theta=new_theta, phi=new_phi)
+    
+            i += 1
+        else:
+            # when i == initial_length - 1:
+            m = G.number_of_nodes()
 
-        G.add_edge(i, m, level=0, length=elen, theta=new_theta, phi=new_phi)
-
-        i += 1
+            cands2 = [n for n in G.nodes() if G.degree(n) == 2 and n > initial_length/2]
+            shuffle(cands2)
+            prev_node = cands2.pop()
+    
+            alpha = np.pi / 2 # guarantee a branch upward
+            
+            beta = G.nodes[prev_node]['theta'] # get the angle of the latest node
+            new_theta = beta + alpha # add to get new theta
+    
+            alpha2 = uniform(-PHI, PHI) # smaller range because tracheal cells are nearly flat
+            beta2 = G.nodes[prev_node]['phi']
+            new_phi = alpha2 + beta2
+            
+            # create and connect the node with parameters made above
+            G.add_node(m, theta=new_theta, phi=new_phi, level = 0)
+            # using polar coordinates below, elen is our "roe"
+            G.nodes[m]['coords'] = (G.nodes[prev_node]['coords'][0] + elen * np.sin(new_phi) * np.cos(new_theta),
+                                    G.nodes[prev_node]['coords'][1] + elen * np.sin(new_phi) * np.sin(new_theta),
+                                    G.nodes[prev_node]['coords'][2] + elen * np.cos(new_phi)
+                                    )
+    
+            G.add_edge(prev_node, m, level=0, length=elen, theta=new_theta, phi=new_phi)        
+            
+            i += 1         
+        
 
     return G
 
@@ -557,7 +615,7 @@ def initialize_tri(initial_length, elen):
 
     for i in [1, 2, 3]:
         new_theta = np.pi/6 + (i-1)*2*np.pi/3 # think tilted mercedes benz symbol on unit circle
-        new_phi = uniform(-np.pi / 128, np.pi / 128)
+        new_phi = uniform(-PHI, PHI)
         
         # add a node at tips of mercedes benz star symbol
         new_coords = elen * np.array([np.sin(new_phi) * np.cos(new_theta), np.sin(new_phi) * np.sin(new_theta), np.cos(new_phi)])
@@ -571,11 +629,11 @@ def initialize_tri(initial_length, elen):
 
         # below with the alphas and deltas, we generate random delta and phi values
 
-        alpha = uniform(-np.pi / 64, np.pi / 64) # small random deviation
+        alpha = uniform(-THETA, THETA) # small random deviation
         beta = G.nodes[i]['theta'] # get the angle of the "terminal" node
         new_theta = beta + alpha # add to get new theta
 
-        alpha2 = uniform(-np.pi / 128, np.pi / 128)
+        alpha2 = uniform(-PHI, PHI)
         beta2 = G.nodes[i]['phi']
         new_phi = alpha2 + beta2
         
@@ -606,9 +664,6 @@ box_lims = [0, 60, -10, 20]
 def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 'tri', max_deg = 3, 
           initial_len = 75, right_side_only = False, get_intermediate_vals = False, make_video=False):
 
-    stay_in_box = True
-    stay_in_box = False
-
     level_num = 0
 
     # initialize a graph of a type depending on init
@@ -618,8 +673,6 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
         G = initialize_line(initial_len, elen)
     else:
         print('error, no initiliazation')
-
-    print('initial condition has', G.number_of_nodes(), 'nodes')
 
     # in the paper, section labeled "Scaling Laws for Asymptotic Growth Regimes"
     # outlines L, Rv (abbrev as R in this code), and A as important variables 
@@ -638,7 +691,8 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
     keep_adding = True
 
     while G.number_of_nodes() <= max_size and keep_adding:
-        print(G.number_of_nodes())
+        if G.number_of_nodes() % 10 == 0:
+            print(G.number_of_nodes())
         # this while loop branches/extends the graph until it has reached max size
 
         #f = 0.75
@@ -676,10 +730,9 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
         # candidate_docks = [n for n in G.nodes() if G.degree(n) < max_deg]
         # shuffle(candidate_docks)
 
-        cands1 = [n for n in G.nodes() if G.degree(n) == 1]
-        cands2 = [n for n in G.nodes() if G.degree(n) == 2]
-        # if the degree is greater than 3, we should not add more to it (ruins binary tree)
-
+        cands1 = [n for n in G.nodes() if G.degree(n) == 1] # for extensions
+        cands2 = [n for n in G.nodes() if G.degree(n) == 2 and n > int(initial_len / 3)] # for budding (we don't want to bud in the earliest nodes)
+        
         #degree_tuples = G.degree()
 
         shuffle(cands1)
@@ -717,12 +770,9 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
             # we focus more on extension than budding
             
             # BP_state is the branch probability based on the state (state as in young or old)
-            if G.number_of_nodes() < 60:
-                # when very young, we want some branching
-                BP_state = branch_probability * 2
-            elif G.number_of_nodes() < 300:
+            if G.number_of_nodes() < S2_UPPER_LIMIT:
                 # when medium young, we want mostly extension
-                BP_state = branch_probability / 10
+                BP_state = branch_probability / 7
             else:
                 # # when older, we want regular growth
                 BP_state = branch_probability
@@ -747,6 +797,8 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
             if make_video and level_num % frame_interval == 0:
                 color_plot_walk(G, frame_index)
                 frame_index += 1
+                
+    plot(randoms, avoidings, grads)
 
     return G
 
@@ -1007,4 +1059,22 @@ def color_plot_walk(G, frame_index):
     fig.savefig(file_name, dpi=300, bbox_inches='tight')
     
     plt.close()
+    
+def plot(randoms, avoidings, grads):
+    
+    names = ["randoms", "avoidings", "grads"]
+    
+    for i in range(3):
+        angle_list = [randoms, avoidings, grads][i]
+        plt.plot(range(len(angle_list)), angle_list, label=names[i])
+        
+        
+    print("###########\n\n\n\n")
+    print(max(randoms), min(randoms))
+        
+    plt.legend()
+    plt.show()
+    
+
+                
 
