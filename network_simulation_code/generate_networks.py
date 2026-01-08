@@ -18,20 +18,21 @@ grads = []
 EPSILON = sys.float_info.epsilon
 GROWTH_FRACTION = 1/4
 
-MUSCLE_COORDS_S3 = [
-    (150, 0, 0),
-    (80, 80, 0),
-    (70, -120, 0)
-    ] # stage two will have three attractive muscles tissues
+MUSCLE_COORDS = [
+    (150, 100, 0),
+    (70, 100, 0),
+    (70, -70, 0)
+    ]
 
-BUFFER_S1 = 1 / 8
-BUFFER_S3 = 1 / 16
+GRAD_BUFFER = 1 / 16
 
-S1_UPPER_LIMIT = 60
-S2_UPPER_LIMIT = 150
+EXTEND_1 = 100
+BRANCH_1 = 300
+EXTEND_2 = 400
+BRANCH_2 = 500
 
 THETA = np.pi / 25
-PHI = np.pi / 128
+PHI = np.pi / 160
 
 # below are 2D intersection finders
 # # intersection helper
@@ -153,9 +154,14 @@ def new_edge(G, n, elen, lev, point_tree, override = False):
          np.sin(new_phi) * np.sin(new_theta),
          np.cos(new_phi)]
         )
+        
+    if G.degree(n) == 2:
+        branch_order = nx.get_node_attributes(G, "branch_order")[n] + 1
+    else:
+        branch_order = nx.get_node_attributes(G, "branch_order")[n]
     
     G.add_node(m, theta=new_theta, phi=new_phi, level = lev,
-               coords = G.nodes[n]['coords'] + delta_coords)
+               coords = G.nodes[n]['coords'] + delta_coords, branch_order=branch_order)
 
     G.add_edge(n, m, level = lev, length = elen, theta=new_theta, phi=new_phi)
 
@@ -399,12 +405,12 @@ def get_alphas(G, n, point_tree, elen):
     
     Takes into account other nodes (self-avoiding) and the Bnl gradient given by muscle tissue'''
 
-    buffer = 1 / 8
+    buffer = 1 / 32
     # spread = 1  # 5
     # # spread = 10
     
     #### self avoiding
-    neibs = point_tree.query_ball_point(G.nodes[n]['coords'], 2.5*elen) # 2 or 3 elen seems ok
+    neibs = point_tree.query_ball_point(G.nodes[n]['coords'], 3*elen) # 2 or 3 elen seems ok
             # however, bigger coefficient makes it more frivoly and less branchy/more longer single branches
 
     terminal_point = G.nodes[n]["coords"]
@@ -430,11 +436,9 @@ def get_alphas(G, n, point_tree, elen):
     #### Gradient influence
     grad_vector = np.array([0.0, 0.0, 0.0])
     
-    if G.number_of_nodes() > S2_UPPER_LIMIT:
-        MC = MUSCLE_COORDS_S3
-        buffer = BUFFER_S3
-    
-        for muscle_coord in MC:
+    if G.number_of_nodes() > BRANCH_1:
+        
+        for muscle_coord in MUSCLE_COORDS:
             new_grad_vector = find_grad(growing_node_coords, muscle_coord)
             grad_vector += new_grad_vector
     
@@ -445,8 +449,8 @@ def get_alphas(G, n, point_tree, elen):
         to_scale = normalized * elen
                 
         grad_theta, grad_phi = find_angles(comp_vector, to_scale, elen)
-        grad_theta *= buffer
-        grad_phi *= buffer
+        grad_theta *= GRAD_BUFFER
+        grad_phi *= GRAD_BUFFER
     else:
         grad_theta = 0
         grad_phi = 0
@@ -556,17 +560,17 @@ def initialize_line(initial_length, elen):
     
             # below with the alphas and deltas, we generate random delta and phi values
     
-            alpha = uniform(-THETA, THETA) # small random deviation
+            alpha = uniform(-THETA / 2, THETA / 2) # small random deviation
             beta = G.nodes[i]['theta'] # get the angle of the latest node
             new_theta = beta + alpha # add to get new theta
     
-            alpha2 = uniform(-PHI, PHI) # smaller range because tracheal cells are nearly flat
+            alpha2 = uniform(-PHI / 2, PHI / 2) # smaller range because tracheal cells are nearly flat
             beta2 = G.nodes[i]['phi']
             new_phi = alpha2 + beta2
             # there is most defnitely a problem with adding pi/2 to phi. It only goes between pi/2 and pi
             
             # create and connect the node with parameters made above
-            G.add_node(m, theta=new_theta, phi=new_phi, level = 0)
+            G.add_node(m, theta=new_theta, phi=new_phi, level = 0, branch_order=0)
             # using polar coordinates below, elen is our "roe"
             G.nodes[m]['coords'] = (G.nodes[i]['coords'][0] + elen * np.sin(new_phi) * np.cos(new_theta),
                                     G.nodes[i]['coords'][1] + elen * np.sin(new_phi) * np.sin(new_theta),
@@ -594,7 +598,7 @@ def initialize_line(initial_length, elen):
             new_phi = alpha2 + beta2
             
             # create and connect the node with parameters made above
-            G.add_node(m, theta=new_theta, phi=new_phi, level = 0)
+            G.add_node(m, theta=new_theta, phi=new_phi, level = 0, branch_order=1)
             # using polar coordinates below, elen is our "roe"
             G.nodes[m]['coords'] = (G.nodes[prev_node]['coords'][0] + elen * np.sin(new_phi) * np.cos(new_theta),
                                     G.nodes[prev_node]['coords'][1] + elen * np.sin(new_phi) * np.sin(new_theta),
@@ -728,11 +732,32 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
 
         # candidate docks must have a sufficiently small degree
         # candidate_docks = [n for n in G.nodes() if G.degree(n) < max_deg]
+        
         # shuffle(candidate_docks)
 
-        cands1 = [n for n in G.nodes() if G.degree(n) == 1] # for extensions
-        cands2 = [n for n in G.nodes() if G.degree(n) == 2 and n > int(initial_len / 3)] # for budding (we don't want to bud in the earliest nodes)
+        hairy = False
         
+        # BP_state is the branch probability based on the state (state as in young or old)
+        num_nodes = G.number_of_nodes()
+        if num_nodes < EXTEND_1:
+            # first focus on extension
+            BP_state = branch_probability / 7
+        elif num_nodes < BRANCH_1:
+            # then move on to secondary branches
+            BP_state = branch_probability
+        elif num_nodes < EXTEND_2:
+            # then grow those primary and secondary branches
+            BP_state = branch_probability / 7
+        elif num_nodes < BRANCH_2:
+            # the finally the hairy/teriary branching, which we want a lot of # need extension?
+            BP_state = branch_probability
+            hairy = True
+
+        cands1 = [n for n in G.nodes() if G.degree(n) == 1] # for extensions
+        if not hairy:
+            cands2 = [n for n in G.nodes() if G.degree(n) == 2 and n > int(initial_len / 3)] # for budding (we don't want to bud in the earliest nodes)
+        else:
+            cands2 = [n for n in G.nodes() if G.degree(n) == 2 and n > int(initial_len / 3) and nx.get_node_attributes(G, "branch_order")[n] == 2]
         #degree_tuples = G.degree()
 
         shuffle(cands1)
@@ -750,37 +775,10 @@ def BSARW(max_size, elen, branch_probability = .1, stretch_factor = 0, init = 't
         # docking criteria is found (density and line density requirements)
         while not edge_added:
 
-            #print(len(cands1), len(cands2))
-            
-            '''
-            # find the first instance of node with level = 0 (made by initialization)
-            if G.number_of_nodes() / max_size <= GROWTH_FRACTION:
-                # if we are a certain fraction of the way fully growed
-                for node in cands2:
-                    if G.nodes()[node]["level"] == 0:
-                        dock = node
-                        break
-                
-            else:
-                dock = cands2.pop()                
-            
-            '''
-
-            # the following block of if-statements makes it so that while we are still "young"
-            # we focus more on extension than budding
-            
-            # BP_state is the branch probability based on the state (state as in young or old)
-            if G.number_of_nodes() < S2_UPPER_LIMIT:
-                # when medium young, we want mostly extension
-                BP_state = branch_probability / 7
-            else:
-                # # when older, we want regular growth
-                BP_state = branch_probability
-                
             # this actually decides whether to bud or extend
             if random() < BP_state and len(cands2) > 0:
                 dock = cands2.pop()
-                
+                                
                 G, edge_added = new_edge(G, dock, elen, level_num, point_tree)
                 # in this case, we would be branching
             elif len(cands1) > 0:

@@ -77,7 +77,7 @@ all_As = []
 all_Ls = []
 
 
-reps = 1
+reps = 2
 
 size_distribution = np.random.normal(800, 200, reps)
 
@@ -108,7 +108,7 @@ b = 0.055
 
 print('s:', s, 'b:', b)
 
-make_video = True
+make_video = False
 initial_length = 30
 
 
