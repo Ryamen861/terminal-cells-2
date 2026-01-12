@@ -821,7 +821,6 @@ def BSARW_no_tip_ext(max_size, elen, branch_factor = 1, stretch_factor = 1,
         if stretch_factor > 1:
             G = stretch(G, stretch_factor)
 
-
         #candidate_docks = [n for n in G.nodes() if G.degree(n) == 2]
         candidate_docks = [n for n in G.nodes() if G.degree(n) < max_deg]
 
