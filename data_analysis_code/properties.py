@@ -124,8 +124,7 @@ def trace_file_to_G(filename):
                         neighbor_node = get_closest_node(G, np.array((xd, yd, zd)))
                         #G.add_edge(node_count, get_closest_node(G, np.array((xd, yd, zd))))
 
-                    # else: add edge to the previous node
-
+                    # else, add edge to the previous node
                     elif node_count > 1:
                         neighbor_node = node_count-1
                         G.add_edge(node_count, neighbor_node)
