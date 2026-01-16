@@ -7,6 +7,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import seaborn as sns
 import random
+import collections
 
 def f(G, n):
     '''For now, f gives the radial distance/number of edges to the root from n'''
@@ -307,40 +308,153 @@ for fly in range(1, 29):
 
 #%% Testing
 
+def give_axes(coords, barcode=False):
+    
+    if barcode:
+        max_y = 0
+        
+        for x, y in coords:
+            max_y = y if y > max_y else max_y
+            
+            
+        return [0, max_y + 1, 0, len(coords) + 1]
+        
+    else:
+        max_num = 0
+        
+        for x, y in coords:
+            max_num = x if x > max_num else max_num
+            max_num = y if y > max_num else max_num
+            
+        return [0, max_num + 1, 0, max_num + 1]
+    
+def sort_persistence_pairs(coords):
+    """
+    Sorts (birth, death) pairs by:
+    1) decreasing persistence length
+    2) increasing coordinate magnitude
+    """
+    
+    return sorted(coords, key=lambda x: (-(x[1] - x[0]), x[0] + x[1]))
+
+def color_plot_walk(G, TMD_coords, fly, side):
+
+    savename = f"traces/image_{fly}_{side}"
+    fig, axs = plt.subplots(2, 2)
+    
+    ax1 = axs[0, 0]
+    ax2 = axs[0, 1]
+    ax3 = axs[1, 0]
+    ax4 = axs[1, 1]
+    ax4.axis("off")
+    ax1.text(0.05, 0.95, f'{fly}_{side}', transform=ax1.transAxes, fontsize=17, va='center_baseline', ha='center')
+    
+    maxLevel = max(G.nodes()) + 1
+    palette = sns.dark_palette("red", maxLevel, reverse=True)
+
+    for e in G.edges(data=True):
+        # e is a tuple that looks like this:
+        # (node_connected_by_edge, other_node_connected_by_edge, dict_of_attributes)
+        # the dictionary holds level, length, and ange information
+        
+        # find the coordinates of the two nodes connected by this edge
+        c0 = G.nodes[e[0]]['coords']
+        c1 = G.nodes[e[1]]['coords']
+
+        # the level gives index for RGB value
+        c = palette[e[0]]
+
+        ax1.plot([c0[0], c1[0]], [c0[1], c1[1]], color=c, linewidth = 2)
+
+    #plt.axis('equal')
+    #plt.axis('off')
+
+    trace_coords = np.array([i[:2] for i in nx.get_node_attributes(G, 'coords').values()])
+    xs = trace_coords[:, 0]
+    ys = trace_coords[:, 1]
+
+    xcent = 0.5*(np.max(xs) + np.min(xs))
+    ycent = 0.5*(np.max(ys) + np.min(ys))
+
+    lim = 300
+
+    ax1.axis([xcent - lim, xcent + lim, ycent - lim, ycent + lim])
+    plt.gca().set_aspect('equal', adjustable='box')
+    ax1.axis('off')
+    
+    # for the persistence diagram
+    ax2.axis(give_axes(TMD_coords)) # add a formatting function here that dynamically chooses axes
+    ax2.axis("on")
+    ax2.set_xlabel("Birth (distance from root)")
+    ax2.set_ylabel("Death (distance from root)")
+    ax2.set_xticks(np.linspace(0, 6, 7))
+    ax2.set_yticks(np.linspace(0, 6, 7))
+    ax2.grid()
+    
+    for x, y in TMD_coords:
+        ax2.scatter(x, y, color="red", s=10)
+        
+    # persistence barcode
+    ax3.axis(give_axes(TMD_coords, barcode=True)) # add a formatting function here that dynamically chooses axes
+    ax3.axis("on")
+    ax3.set_xlabel("Lifetime (distance from root)")
+    ax3.set_ylabel("Length of Lifetime")
+    ax3.set_xticks(np.linspace(0, 6, 7))
+    ax3.set_yticks(np.linspace(0, 6, 7))
+    ax3.grid()
+    
+    # y axis is in increasing length of strand
+    TMD_coords = sort_persistence_pairs(TMD_coords)
+
+    for index in range(len(TMD_coords)):
+        birth, death = TMD_coords[index]
+        ax3.hlines(y=index + 1, xmin=birth, xmax=death, color='red')
+
+    plt.savefig(savename + '.pdf', bbox_inches='tight')
+    plt.close()
+
+
 k = nx.DiGraph()
-for i in range(1, 18):
+for i in range(1, 11):
     k.add_node(i)
     
 k.add_edge(1, 2)
 k.add_edge(2, 3)
 k.add_edge(3, 4)
 k.add_edge(4, 5)
-k.add_edge(5, 6)
-k.add_edge(6, 7)
 
-k.add_edge(4, 8)
+k.add_edge(4, 6)
+
+k.add_edge(3, 7)
+
+k.add_edge(2, 8)
 k.add_edge(8, 9)
 k.add_edge(8, 10)
 
-k.add_edge(2, 11)
-k.add_edge(11, 12)
-k.add_edge(12, 13)
-k.add_edge(12, 14)
-k.add_edge(11, 15)
 
-k.add_edge(14, 16)
-k.add_edge(14, 17)
+radii = [0, 1, 3, 4, 6, 5, 4, 2, 3, 1]
+coords = [
+    (0, 0),
+    (0, 1),
+    (0, 2),
+    (1, 3),
+    (2, 4),
+    (1, 4),
+    (-1, 3),
+    (-2, 2),
+    (-2, 3),
+    (-3, 3),
+    ]
 
-nx.set_node_attributes(k, zip(list(k.nodes()), list(k.nodes())), "radius")
+coords = np.array(coords)
+coords *= 100
 
 
-n = 0
-for node in k.nodes():
-    print(node)
-    plt.plot((node, node), (n, n))
-    n += 1
+nx.set_node_attributes(k, dict(zip(list(k.nodes()), radii)), "radius")
+nx.set_node_attributes(k, dict(zip(list(k.nodes()), coords)), "coords")
 
-plt.show()
+TMD_coords = TMD(k, min(list(k.nodes())))
+color_plot_walk(k, TMD_coords, "test", "test")
 
 
 

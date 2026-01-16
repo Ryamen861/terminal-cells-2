@@ -6,3 +6,5 @@ This repository is a forked version just for me to learn.
 It implements (somewhat):
 - 3D network simulation
 - Self Avoidance
+- A vector field to simulate Bnl gradient was attempted
+- TMD algorithm analysis of traced tracheal cells
