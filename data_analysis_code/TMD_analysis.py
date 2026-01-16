@@ -34,6 +34,15 @@ def give_axes(coords, barcode=False):
             
         return [0, max_num + 50, 0, max_num + 50]
 
+def sort_persistence_pairs(coords):
+    """
+    Sorts (birth, death) pairs by:
+    1) decreasing persistence length
+    2) increasing coordinate magnitude
+    """
+    
+    return sorted(coords, key=lambda x: (-(x[1] - x[0]), x[0] + x[1]))
+
 def color_plot_walk(G, TMD_coords, fly, side):
 
     savename = f"traces/image_{fly}_{side}"
@@ -61,10 +70,7 @@ def color_plot_walk(G, TMD_coords, fly, side):
         # the level gives index for RGB value
         c = palette[e[0]]
 
-        ax1.plot([c0[0], c1[0]], [c0[1], c1[1]], color=c, linewidth = .5)
-
-    #plt.axis('equal')
-    #plt.axis('off')
+        ax1.plot([c0[0], c1[0]], [c0[1], c1[1]], color=c, linewidth = 1)
 
     trace_coords = np.array([i[:2] for i in nx.get_node_attributes(G, 'coords').values()])
     xs = trace_coords[:, 0]
@@ -82,18 +88,26 @@ def color_plot_walk(G, TMD_coords, fly, side):
     # for the persistence diagram
     ax2.axis(give_axes(TMD_coords)) # add a formatting function here that dynamically chooses axes
     ax2.axis("on")
-    ax2.set_xlabel("Birth (distance from root)")
-    ax2.set_ylabel("Death (distance from root)")
+    ax2.set_xlabel("Birth (distance from root)", loc="left")
+    ax2.set_ylabel("Death (dist from root)")
+    ax2.grid()
+    
     for x, y in TMD_coords:
-        ax2.scatter(x, y, color="blue", s=0.7)
+        ax2.scatter(x, y, color="red", s=10)
         
+    # persistence barcode
     ax3.axis(give_axes(TMD_coords, barcode=True)) # add a formatting function here that dynamically chooses axes
     ax3.axis("on")
     ax3.set_xlabel("Lifetime (distance from root)")
-    ax3.set_ylabel("Not exactly sure")
+    ax3.set_ylabel("Length of Lifetime")
+    ax3.grid()
+    
+    # y axis is in increasing length of strand
+    TMD_coords = sort_persistence_pairs(TMD_coords)
+
     for index in range(len(TMD_coords)):
         birth, death = TMD_coords[index]
-        ax3.hlines(y=index, xmin=birth, xmax=death, color='black')
+        ax3.hlines(y=index + 1, xmin=birth, xmax=death, color='red')
 
     plt.savefig(savename + '.pdf', bbox_inches='tight')
     plt.close()
@@ -293,7 +307,9 @@ def TMD(G, root):
 
 is_right = True
 
-for fly in range(1, 29):
+fly = 1
+
+while fly < 29:
     side = "R" if is_right else "L"
     
     G = trace_file_to_G(f"data/traces_L3/{fly}_Tr9{side}.traces")
@@ -301,10 +317,15 @@ for fly in range(1, 29):
     coords = TMD(G, min(list(G.nodes())))
     
     color_plot_walk(G, coords, fly, side)
+    
+    # I don't this the following algorithm is working correctly
+    if not is_right: # if we are at left, now we can uptick, since we need fly = 1 for R and L
+        fly += 1
 
     is_right = not is_right
         
-    break
+    if fly == 5: # only do the first five for now
+        break
 
 #%% Testing
 
@@ -339,7 +360,7 @@ def sort_persistence_pairs(coords):
 
 def color_plot_walk(G, TMD_coords, fly, side):
 
-    savename = f"traces/image_{fly}_{side}"
+    savename = f"traces/TMD_{fly}_{side}"
     fig, axs = plt.subplots(2, 2)
     
     ax1 = axs[0, 0]
