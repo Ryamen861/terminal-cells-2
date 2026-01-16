@@ -103,7 +103,7 @@ def trace_file_to_G(filename):
                     xd = np.round(float(nDict[keys[3]]), 4)
                     yd = np.round(float(nDict[keys[4]]), 4)
                     zd = np.round(float(nDict[keys[5]]), 4)
-                    r = nDict[keys[0]]
+                    r = float(nDict[keys[0]])
                     
                     coords = np.array((xd, yd, zd))
 
@@ -133,7 +133,7 @@ def trace_file_to_G(filename):
 
                     if node_count > 1:
                         # if a graph currently exists, we need to connect our 
-                        # new point to the neighbor determined above
+                        # new point to the neighbor/parent determined above
                         G.add_edge(parent_node, node_count, length=1)
 
                     node_count += 1
@@ -156,6 +156,7 @@ def children_active(children, active_nodes):
     
     # edge case, there are no children
     if len(list(children)) == 0:
+        print("no children")
         return False
     
     all_children_are_active = True
@@ -166,30 +167,32 @@ def children_active(children, active_nodes):
             
     return all_children_are_active
 
-def v(subtree):
+def v(G, subtree):
     # fxs = []
     # leaves = [node for node in subtree.nodes() if subtree.degree(node) == 1]
     
     # for x in leaves:
     #     fxs.append(f(subtree, x))
-    
-    fxs = list(nx.get_node_attributes(subtree, "f").values())
         
+    fxs = []
+    for node in subtree.nodes():
+        fxs.append(G.nodes[node]["f"])
+            
     return max(fxs)
 
 def find_possible_cms(G, children):
-    print(f"length of children {len(list(children))}")
     possible_cms = []
     node_to_vcs = {}
+    
     for child in children:
-        node_to_vcs[child] = v(G.successors(child))
+        subtree = nx.dfs_tree(G, source=child)
+        node_to_vcs[child] = v(G, subtree)
     
     vcs = list(node_to_vcs.values())
-    print(len(vcs))
     nx.set_node_attributes(G, node_to_vcs, "v")
     max_vc = max(vcs)
     
-    for child, vc in vcs:
+    for child, vc in node_to_vcs.items():
         if vc == max_vc:
             possible_cms.append(child)
     
@@ -198,19 +201,29 @@ def find_possible_cms(G, children):
 def TMD(G, root):
     coord_pairs = []
     
-    active_nodes = np.array([node for node in G if G.degree(node) == 1 and node != root])
+    active_nodes = [node for node in G if G.degree(node) == 1 and node != root]
     
-    for leaf in active_nodes:
-        fls = [f(G, n) for n in active_nodes]
-        fl_attributes = dict(zip(G.nodes(), fls))
-        nx.set_node_attributes(G, fl_attributes, "v")
+    
         
+    # for each leaf, give it v(l) = f(l)
+    fls = [f(G, n) for n in active_nodes]
+    fl_attributes = dict(zip(active_nodes, fls))
+        
+    nx.set_node_attributes(G, fl_attributes, "v")
+    
+    # unauthorized coding right here (me sprinkling some part that I think should be put in)
+    all_fs = [f(G, n) for n in G.nodes()]
+    fs_attr = dict(zip(G.nodes(), all_fs))
+    nx.set_node_attributes(G, fs_attr, "f")
+    # f (radial distance) should be assigned for every node, whether it is a branch or leaf node
+            
     while root not in active_nodes:
-        print("###########")
         for leaf in active_nodes:
             
+            print(f"We are at leaf {leaf}")
+            
             parent = list(G.predecessors(leaf))[0]
-            children = G.successors(parent)
+            children = list(G.successors(parent))
             
             if children_active(children, active_nodes):
                 possible_cms = find_possible_cms(G, children)
@@ -221,11 +234,15 @@ def TMD(G, root):
                     active_nodes.remove(child)
                     
                     if child != Cm:
-                        coord_pairs.append((v(child), f(G, parent)))
-                    
-                G.nodes[parent]['v'] = v(Cm)
+                        subtree = nx.dfs_tree(G, source=child)
+                        coord_pairs.append((v(G, subtree), f(G, parent)))
                 
-    coord_pairs.append(v(root), f(G, root))
+                subtree = nx.dfs_tree(G, source=Cm)
+                G.nodes[parent]['v'] = v(G, subtree)
+                
+    subtree = nx.dfs_tree(G, source=root)
+    coord_pairs.append((v(G, subtree), f(G, root)))
+    
     return coord_pairs
 
 k = nx.DiGraph()
@@ -252,6 +269,14 @@ k.add_edge(11, 15)
 k.add_edge(14, 16)
 k.add_edge(14, 17)
 
+#%% Testing
+
+
+
+
+
+#%%
+
 nx.set_node_attributes(k, zip(list(k.nodes()), list(k.nodes())), "radius")
 
 is_right = True
@@ -260,7 +285,6 @@ for fly in range(1, 29):
     side = "R" if is_right else "L"
     
     G = trace_file_to_G(f"data/traces_L3/{fly}_Tr9{side}.traces")
-    # G = k
     # color_plot_walk(G, f"traces/image_{fly}_{side}")
     
     TMD(G, min(list(G.nodes())))
