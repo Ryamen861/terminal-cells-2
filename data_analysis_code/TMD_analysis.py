@@ -12,10 +12,39 @@ def f(G, n):
     '''For now, f gives the radial distance/number of edges to the root from n'''
     return nx.get_node_attributes(G, "radius")[n]
 
-def color_plot_walk(G, savename):
+def give_axes(coords, barcode=False):
+    
+    if barcode:
+        max_y = 0
+        
+        for x, y in coords:
+            max_y = y if y > max_y else max_y
+            
+            
+        return [0, max_y + 100, 0, len(coords) + 3]
+        
+    else:
+        max_num = 0
+        
+        for x, y in coords:
+            max_num = x if x > max_num else max_num
+            max_num = y if y > max_num else max_num
+            
+            
+        return [0, max_num + 50, 0, max_num + 50]
 
-    fig, ax = plt.subplots(figsize=(2, 2))
+def color_plot_walk(G, TMD_coords, fly, side):
 
+    savename = f"traces/image_{fly}_{side}"
+    fig, axs = plt.subplots(2, 2)
+    
+    ax1 = axs[0, 0]
+    ax2 = axs[0, 1]
+    ax3 = axs[1, 0]
+    ax4 = axs[1, 1]
+    ax4.axis("off")
+    ax1.text(0.05, 0.95, f'{fly}_{side}', transform=ax1.transAxes, fontsize=17, va='center_baseline', ha='center')
+    
     maxLevel = max(G.nodes()) + 1
     palette = sns.dark_palette("red", maxLevel, reverse=True)
 
@@ -31,23 +60,39 @@ def color_plot_walk(G, savename):
         # the level gives index for RGB value
         c = palette[e[0]]
 
-        plt.plot([c0[0], c1[0]], [c0[1], c1[1]], color=c, linewidth = .5)
+        ax1.plot([c0[0], c1[0]], [c0[1], c1[1]], color=c, linewidth = .5)
 
     #plt.axis('equal')
     #plt.axis('off')
 
-    coords = np.array([i[:2] for i in nx.get_node_attributes(G, 'coords').values()])
-    xs = coords[:, 0]
-    ys = coords[:, 1]
+    trace_coords = np.array([i[:2] for i in nx.get_node_attributes(G, 'coords').values()])
+    xs = trace_coords[:, 0]
+    ys = trace_coords[:, 1]
 
     xcent = 0.5*(np.max(xs) + np.min(xs))
     ycent = 0.5*(np.max(ys) + np.min(ys))
 
     lim = 300
 
-    plt.axis([xcent - lim, xcent + lim, ycent - lim, ycent + lim])
+    ax1.axis([xcent - lim, xcent + lim, ycent - lim, ycent + lim])
     plt.gca().set_aspect('equal', adjustable='box')
-    plt.axis('off')
+    ax1.axis('off')
+    
+    # for the persistence diagram
+    ax2.axis(give_axes(TMD_coords)) # add a formatting function here that dynamically chooses axes
+    ax2.axis("on")
+    ax2.set_xlabel("Birth (distance from root)")
+    ax2.set_ylabel("Death (distance from root)")
+    for x, y in TMD_coords:
+        ax2.scatter(x, y, color="blue", s=0.7)
+        
+    ax3.axis(give_axes(TMD_coords, barcode=True)) # add a formatting function here that dynamically chooses axes
+    ax3.axis("on")
+    ax3.set_xlabel("Lifetime (distance from root)")
+    ax3.set_ylabel("Not exactly sure")
+    for index in range(len(TMD_coords)):
+        birth, death = TMD_coords[index]
+        ax3.hlines(y=index, xmin=birth, xmax=death, color='black')
 
     plt.savefig(savename + '.pdf', bbox_inches='tight')
     plt.close()
@@ -154,7 +199,7 @@ def trace_file_to_G(filename):
 
 def children_active(children, active_nodes):
     
-    # edge case, there are no children
+    # edge case, there are no children (not sure if this is needed at all)
     if len(list(children)) == 0:
         print("no children")
         return False
@@ -183,7 +228,7 @@ def v(G, subtree):
 def find_possible_cms(G, children):
     possible_cms = []
     node_to_vcs = {}
-    
+        
     for child in children:
         subtree = nx.dfs_tree(G, source=child)
         node_to_vcs[child] = v(G, subtree)
@@ -245,6 +290,23 @@ def TMD(G, root):
     
     return coord_pairs
 
+is_right = True
+
+for fly in range(1, 29):
+    side = "R" if is_right else "L"
+    
+    G = trace_file_to_G(f"data/traces_L3/{fly}_Tr9{side}.traces")
+    
+    coords = TMD(G, min(list(G.nodes())))
+    
+    color_plot_walk(G, coords, fly, side)
+
+    is_right = not is_right
+        
+    break
+
+#%% Testing
+
 k = nx.DiGraph()
 for i in range(1, 18):
     k.add_node(i)
@@ -269,32 +331,16 @@ k.add_edge(11, 15)
 k.add_edge(14, 16)
 k.add_edge(14, 17)
 
-#%% Testing
-
-
-
-
-
-#%%
-
 nx.set_node_attributes(k, zip(list(k.nodes()), list(k.nodes())), "radius")
 
-is_right = True
 
-for fly in range(1, 29):
-    side = "R" if is_right else "L"
-    
-    G = trace_file_to_G(f"data/traces_L3/{fly}_Tr9{side}.traces")
-    # color_plot_walk(G, f"traces/image_{fly}_{side}")
-    
-    TMD(G, min(list(G.nodes())))
+n = 0
+for node in k.nodes():
+    print(node)
+    plt.plot((node, node), (n, n))
+    n += 1
 
-    is_right = not is_right
-        
-    break
-
-
-
+plt.show()
 
 
 
