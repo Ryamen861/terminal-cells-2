@@ -8,10 +8,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import random
 import collections
-
-def f(G, n):
-    '''For now, f gives the radial distance/number of edges to the root from n'''
-    return nx.get_node_attributes(G, "radius")[n]
+import copy
 
 def give_axes(coords, barcode=False):
     
@@ -45,7 +42,7 @@ def sort_persistence_pairs(coords):
 
 def color_plot_walk(G, TMD_coords, fly, side):
 
-    savename = f"traces/image_{fly}_{side}"
+    savename = f"TMD_data/image_{fly}_{side}"
     fig, axs = plt.subplots(2, 2)
     
     ax1 = axs[0, 0]
@@ -57,7 +54,7 @@ def color_plot_walk(G, TMD_coords, fly, side):
     
     maxLevel = max(G.nodes()) + 1
     palette = sns.dark_palette("red", maxLevel, reverse=True)
-
+    
     for e in G.edges(data=True):
         # e is a tuple that looks like this:
         # (node_connected_by_edge, other_node_connected_by_edge, dict_of_attributes)
@@ -69,7 +66,7 @@ def color_plot_walk(G, TMD_coords, fly, side):
 
         # the level gives index for RGB value
         c = palette[e[0]]
-
+             
         ax1.plot([c0[0], c1[0]], [c0[1], c1[1]], color=c, linewidth = 1)
 
     trace_coords = np.array([i[:2] for i in nx.get_node_attributes(G, 'coords').values()])
@@ -112,17 +109,37 @@ def color_plot_walk(G, TMD_coords, fly, side):
     plt.savefig(savename + '.pdf', bbox_inches='tight')
     plt.close()
     
-def get_closest_node(G, n_coords):
+# def get_closest_node(G, n_coords):
 
-    all_pts = nx.get_node_attributes(G, 'coords')
+#     all_pts = nx.get_node_attributes(G, 'coords')
 
-    dist_dict = {k: np.sqrt(np.sum((all_pts[k] - n_coords)**2)) for k in all_pts.keys()}
+#     dist_dict = {k: np.sqrt(np.sum((all_pts[k] - n_coords)**2)) for k in all_pts.keys()}
 
-    sorted_by_dist = dict(sorted(dist_dict.items(), key=lambda item: item[1]))
-    #closest = sorted_by_dist[0]
+#     sorted_by_dist = dict(sorted(dist_dict.items(), key=lambda item: item[1]))
+#     #closest = sorted_by_dist[0]
 
-    #print(list(sorted_by_dist.keys())[:5])
-    return list(sorted_by_dist.keys())[0]
+#     #print(list(sorted_by_dist.keys())[:5])
+#     return list(sorted_by_dist.keys())[0]
+
+
+def get_closest_node(G, coords, exclude_nodes=None):
+    if exclude_nodes is None:
+        exclude_nodes = set()
+
+    best = None  # tuple: (distance, node_id)
+
+    for n, data in G.nodes(data=True):
+        if n in exclude_nodes:
+            continue
+
+        d = np.linalg.norm(data["coords"] - coords)
+        candidate = (d, n)
+
+        if best is None or candidate < best:
+            best = candidate
+
+    return best[1]
+
 
 def trace_file_to_G(filename):
 
@@ -136,67 +153,60 @@ def trace_file_to_G(filename):
 
     G = nx.DiGraph() # make this a directed graph
     node_count = 1
-
-    for path in root:
-        
-        if path.tag == 'path':
-            # print(path.tag, path.attrib.keys())
-
-            pathDict = path.attrib
+    
+    # if the following for loop turns out to be wrong, copy code from previuos commit
+    
+    nodes = []  # list of dict(node_id, coords, radius, path_id, is_first)
+    
+    node_count = 1
+    
+    for path_id, path in enumerate(root):
+        if path.tag != "path":
+            continue
+    
+        if path.attrib["usefitted"] != "false":
+            continue
+    
+        first = True
+        for n in path.iter(tag="point"):
+            nDict = n.attrib
+            keys = list(nDict.keys())
+    
+            xd = np.round(float(nDict[keys[3]]), 4)
+            yd = np.round(float(nDict[keys[4]]), 4)
+            zd = np.round(float(nDict[keys[5]]), 4)
+            r = float(nDict[keys[0]])
+    
+    
+            nodes.append({
+                "id": node_count,
+                "coords": np.array((xd, yd, zd)),
+                "radius": r,
+                "path_id": path_id,
+                "is_first": first
+            })
+    
+            first = False
+            node_count += 1
             
-            if pathDict["usefitted"] == 'false':
-            # ['id', 'swctype', 'color', 'channel', 'frame', 'spines', 'usefitted', 'fitted',
-            #     'startson', 'startx', 'starty',
-            #     'startz', 'startsindex', 'name', 'reallength'])
-
-                # print('now on path id', pathDict[path_dict_keys[0]])
-
-                first_pt = True
-
-                for n in path.iter(tag='point'):
-
-                    nDict = n.attrib
-                    keys = list(nDict.keys())
-
-                    # print(nDict)
-
-                    xd = np.round(float(nDict[keys[3]]), 4)
-                    yd = np.round(float(nDict[keys[4]]), 4)
-                    zd = np.round(float(nDict[keys[5]]), 4)
-                    r = float(nDict[keys[0]])
-                    
-                    coords = np.array((xd, yd, zd))
-
-                    # the following if/elif statements determine the neighbor/who to connect to
-                    if first_pt and node_count > 1:
-                        # the graph already has nodes, but this is the first node of the new path
-                        special_xs.append(xd)
-                        special_ys.append(yd)
-                        special_zs.append(zd)
-
-                        # the line below essentially creates a branch (connecting with edge happens later)
-                        parent_node = get_closest_node(G, np.array((xd, yd, zd)))
-
-                        # flipped off so it only runs once per path/branch
-                        first_pt = False
+    G = nx.DiGraph()
+    
+    for n in nodes:
+        G.add_node(n["id"], coords=n["coords"], radius=n["radius"])
 
 
-                    # else: add edge to the previous node
-
-                    elif node_count > 1:
-                        # extension
-                        parent_node = node_count - 1
-
-                    G.add_node(node_count)
-                    G.nodes[node_count]['coords'] = np.array((xd, yd, zd))
-                    G.nodes[node_count]['radius'] = r
-
-                    if node_count > 1:
-                        # if a graph currently exists, we need to connect our 
-                        # new point to the neighbor/parent determined above
-                        G.add_edge(parent_node, node_count, length=1)
-
-                    node_count += 1
+    for i, n in enumerate(nodes):
+        if i == 0:
+            continue
+    
+        if not n["is_first"]:
+            # extension
+            G.add_edge(nodes[i - 1]["id"], n["id"])
+        else:
+            # branch
+            exclude = {m["id"] for m in nodes if m["path_id"] == n["path_id"]}
+            parent = get_closest_node(G, n["coords"], exclude_nodes=exclude)
+            G.add_edge(parent, n["id"])
 
     coords = nx.get_node_attributes(G, 'coords')
     # flip y-axis for proper AP orientation
@@ -224,84 +234,82 @@ def children_active(children, active_nodes):
     for child in children:
         if child not in active_nodes:
             all_children_are_active = False
+            break
             
     return all_children_are_active
 
-def v(G, subtree):
-    # fxs = []
-    # leaves = [node for node in subtree.nodes() if subtree.degree(node) == 1]
-    
-    # for x in leaves:
-    #     fxs.append(f(subtree, x))
-        
+def f(G, n):
+    '''For now, f gives the radial distance/number of edges to the root from n'''
+    # clarification: the following line is correct, we do not need to recalculate
+    # the radius to the root of G, since f is the radial distance from root R,
+    # so we use the radius from the original graph
+    return nx.get_node_attributes(G, "radius")[n]
+
+def v(G, source):
+    subtree = nx.dfs_tree(G, source=source)
+            
     fxs = []
     for node in subtree.nodes():
         fxs.append(G.nodes[node]["f"])
             
     return max(fxs)
 
-def find_possible_cms(G, children):
+def find_Cm(G, children):
     possible_cms = []
     node_to_vcs = {}
         
     for child in children:
-        subtree = nx.dfs_tree(G, source=child)
-        node_to_vcs[child] = v(G, subtree)
+        node_to_vcs[child] = G.nodes[child]["f"]
     
     vcs = list(node_to_vcs.values())
-    nx.set_node_attributes(G, node_to_vcs, "v")
+    # nx.set_node_attributes(G, node_to_vcs, "f")
     max_vc = max(vcs)
     
     for child, vc in node_to_vcs.items():
         if vc == max_vc:
             possible_cms.append(child)
     
-    return possible_cms
+    return random.choice(possible_cms)
 
 def TMD(G, root):
     coord_pairs = []
     
     active_nodes = [node for node in G if G.degree(node) == 1 and node != root]
-    
-    
         
     # for each leaf, give it v(l) = f(l)
     fls = [f(G, n) for n in active_nodes]
     fl_attributes = dict(zip(active_nodes, fls))
-        
-    nx.set_node_attributes(G, fl_attributes, "v")
+    nx.set_node_attributes(G, fl_attributes, "f")
     
     # unauthorized coding right here (me sprinkling some part that I think should be put in)
-    all_fs = [f(G, n) for n in G.nodes()]
-    fs_attr = dict(zip(G.nodes(), all_fs))
-    nx.set_node_attributes(G, fs_attr, "f")
+    # non_leaves = [node for node in G.nodes() if G.degree(node) != 1 and node != root]
+    # all_fs = [f(G, n) for n in non_leaves]
+    # fs_attr = dict(zip(G.nodes(), all_fs))
+    # nx.set_node_attributes(G, fs_attr, "f")
     # f (radial distance) should be assigned for every node, whether it is a branch or leaf node
             
     while root not in active_nodes:
         for leaf in active_nodes:
             
-            print(f"We are at leaf {leaf}")
+            # print(f"We are at leaf {leaf}")
             
             parent = list(G.predecessors(leaf))[0]
             children = list(G.successors(parent))
             
             if children_active(children, active_nodes):
-                possible_cms = find_possible_cms(G, children)
-                Cm = random.choice(possible_cms)
+                Cm = find_Cm(G, children)
+                
                 active_nodes.append(parent)
                 
                 for child in children:
                     active_nodes.remove(child)
                     
                     if child != Cm:
-                        subtree = nx.dfs_tree(G, source=child)
-                        coord_pairs.append((v(G, subtree), f(G, parent)))
+                        coord_pairs.append((v(G, child), f(G, parent)))
                 
-                subtree = nx.dfs_tree(G, source=Cm)
-                G.nodes[parent]['v'] = v(G, subtree)
+                G.nodes[parent]['f'] = v(G, Cm)
                 
-    subtree = nx.dfs_tree(G, source=root)
-    coord_pairs.append((v(G, subtree), f(G, root)))
+    coord_pairs.append((v(G, root), f(G, root)))
     
     return coord_pairs
 
@@ -309,23 +317,82 @@ is_right = True
 
 fly = 1
 
+sides = []
+
 while fly < 29:
-    side = "R" if is_right else "L"
     
+    new_side = []
+    
+    side = "R" if is_right else "L"
+            
     G = trace_file_to_G(f"data/traces_L3/{fly}_Tr9{side}.traces")
     
-    coords = TMD(G, min(list(G.nodes())))
+    # for analysis, flip x values to positive (reflect across y axis)
+    # this flipping is not done right, I think
+    mod_G = copy.deepcopy(G)
+    for node in mod_G.nodes():
+        new_side.append(G.nodes[node]["radius"])
+        
+
+    coords = TMD(mod_G, min(list(mod_G.nodes())))
     
+    # the upper left hand drawing will reflect L/R
+    # the coordinates will be only the 'reflected to face the right' versions
     color_plot_walk(G, coords, fly, side)
     
-    # I don't this the following algorithm is working correctly
     if not is_right: # if we are at left, now we can uptick, since we need fly = 1 for R and L
         fly += 1
-
+    
     is_right = not is_right
-        
-    if fly == 5: # only do the first five for now
+    
+    sides.append(new_side)
+            
+    if fly == 2: # only do the first five for now
         break
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #%% Testing
 
@@ -474,6 +541,8 @@ coords *= 100
 nx.set_node_attributes(k, dict(zip(list(k.nodes()), radii)), "radius")
 nx.set_node_attributes(k, dict(zip(list(k.nodes()), coords)), "coords")
 
+
+#%%
 TMD_coords = TMD(k, min(list(k.nodes())))
 color_plot_walk(k, TMD_coords, "test", "test")
 

@@ -387,8 +387,6 @@ for fly in range(1, 29):
     is_right = not is_right
     
     find_properties(G)
-    
-    break
 
 
 #%% Topology stuff
