@@ -7,19 +7,18 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import seaborn as sns
 import random
-import collections
 import copy
 
 def give_axes(coords, barcode=False):
     
     if barcode:
-        max_y = 0
+        max_t = 0
         
-        for x, y in coords:
-            max_y = y if y > max_y else max_y
+        for birth, death in coords:
+            max_t = birth if birth > max_t else max_t
+            max_t = death if death > max_t else max_t
             
-            
-        return [0, max_y + 100, 0, len(coords) + 3]
+        return [0, max_t + 100, 0, len(coords) + 3]
         
     else:
         max_num = 0
@@ -39,11 +38,11 @@ def sort_persistence_pairs(coords):
     """
     
     for coord in coords:
-        print(coord)
+        print(coord[1] - coord[0]) # confused by negative/positive lifetimes
     
     return sorted(coords, key=lambda x: (abs(x[1] - x[0]), x[0] + x[1]))
 
-def draw_G(G, ax):
+def draw_G(G, ax, title=""):
     maxLevel = max(G.nodes()) + 1
     palette = sns.dark_palette("red", maxLevel, reverse=True)
     
@@ -58,6 +57,11 @@ def draw_G(G, ax):
 
         # the level gives index for RGB value
         c = palette[e[0]]
+        if e[0] == min(list(G.nodes())):
+            c = 'b'
+            
+        if e[1] == max(list(G.nodes())):
+            c = 'g'
              
         ax.plot([c0[0], c1[0]], [c0[1], c1[1]], color=c, linewidth = 1)
 
@@ -72,6 +76,7 @@ def draw_G(G, ax):
 
     ax.axis([xcent - lim, xcent + lim, ycent - lim, ycent + lim])
     plt.gca().set_aspect('equal', adjustable='box')
+    ax.set_title(f"{title}")
     ax.axis('off')
 
 def show_data(G, cut_G, TMD_coords, fly, side):
@@ -83,11 +88,10 @@ def show_data(G, cut_G, TMD_coords, fly, side):
     ax2 = axs[0, 1]
     ax3 = axs[1, 0]
     ax4 = axs[1, 1]
-    ax2.axis("off")
-    ax1.text(0.05, 0.95, f'{fly}_{side}', transform=ax1.transAxes, fontsize=17, va='center_baseline', ha='center')
+    # ax1.text(0.05, 0.95, , transform=ax1.transAxes, fontsize=17, va='center_baseline', ha='center')
     
-    draw_G(G, ax1)
-    draw_G(cut_G, ax2)
+    draw_G(G, ax1, title=f"{fly}_{side} Original")
+    draw_G(cut_G, ax2, title="Simplified")
         
     # for the persistence diagram
     ax4.axis(give_axes(TMD_coords)) # add a formatting function here that dynamically chooses axes
@@ -131,7 +135,6 @@ def get_closest_node(G, coords, exclude_nodes=None):
 
     return best[1]
 
-
 def TFG(filename):
     '''Takes in a .trace file, returns a DiGraph object constructed from trace
     TFG is short for Trace File to Graph'''
@@ -143,6 +146,8 @@ def TFG(filename):
     special_xs = []
     special_ys = []
     special_zs = []
+    
+    R_radius = None
 
     G = nx.DiGraph() # make this a directed graph
     node_count = 1
@@ -168,8 +173,14 @@ def TFG(filename):
             xd = np.round(float(nDict[keys[3]]), 4)
             yd = np.round(float(nDict[keys[4]]), 4)
             zd = np.round(float(nDict[keys[5]]), 4)
-            r = float(nDict[keys[0]])
-    
+            
+            if node_count == 1:
+                R_coords = np.array([xd, yd, zd])
+                r = 0
+            else:
+                new_node_coords = np.array([xd, yd, zd])
+                r = np.linalg.norm(new_node_coords - R_coords)
+                
             nodes.append({
                 "id": node_count,
                 "coords": np.array((xd, yd, zd)),
@@ -234,98 +245,6 @@ def TFG(filename):
                 break
 
     return G, cut_G
-
-def trace_file_to_G(filename):
-
-    input = gzip.open(filename, 'r')
-    tree = ET.parse(input)
-    root = tree.getroot()
-
-    G = nx.DiGraph()
-    node_count = 1
-
-    nodes = []   # (id, coords, radius, path_id, is_first)
-
-    # ---------- PASS 1: read ALL points ----------
-    for path_id, path in enumerate(root):
-        if path.tag != "path":
-            continue
-        if path.attrib["usefitted"] != "false":
-            continue
-
-        first = True
-        for n in path.iter(tag="point"):
-            nDict = n.attrib
-            keys = list(nDict.keys())
-
-            xd = np.round(float(nDict[keys[3]]), 4)
-            yd = np.round(float(nDict[keys[4]]), 4)
-            zd = np.round(float(nDict[keys[5]]), 4)
-            r  = float(nDict[keys[0]])
-
-            nodes.append({
-                "id": node_count,
-                "coords": np.array((xd, yd, zd)),
-                "radius": r,
-                "path_id": path_id,
-                "is_first": first
-            })
-
-            first = False
-            node_count += 1
-
-    # ---------- ADD ALL NODES ----------
-    for n in nodes:
-        G.add_node(n["id"], coords=n["coords"], radius=n["radius"])
-
-    # ---------- PASS 2: connect full paths ----------
-    for i, n in enumerate(nodes):
-        if i == 0:
-            continue
-
-        if not n["is_first"]:
-            # extension along same path
-            G.add_edge(nodes[i - 1]["id"], n["id"])
-        else:
-            # branch: connect first point of path to closest existing node
-            exclude = {m["id"] for m in nodes if m["path_id"] == n["path_id"]}
-            parent = get_closest_node(G, n["coords"], exclude_nodes=exclude)
-            G.add_edge(parent, n["id"])
-
-    # ---------- FLIP Y AXIS ----------
-    coords = nx.get_node_attributes(G, 'coords')
-    max_y = np.max([v[1] for v in coords.values()])
-    coords = {k: (coords[k][0], max_y - coords[k][1], coords[k][2]) for k in coords}
-    nx.set_node_attributes(G, coords, 'coords')
-
-    # ---------- EDGE LENGTHS ----------
-    for u, v in G.edges():
-        c1 = np.array(G.nodes[u]['coords'][:2])
-        c2 = np.array(G.nodes[v]['coords'][:2])
-        G[u][v]['length'] = np.linalg.norm(c1 - c2)
-
-    # ---------- PASS 3: collapse degree-2 nodes ----------
-    more_to_cut = True
-    while more_to_cut:
-        more_to_cut = False
-        # if there are no more degree 2 nodes, more_to_cut will stay False and exit loop
-        for n in list(G.nodes()):
-            if G.in_degree(n) == 1 and G.out_degree(n) == 1:
-                parent = list(G.predecessors(n))[0]
-                child  = list(G.successors(n))[0]
-
-                # accumulate length
-                new_len = G[parent][n]['length'] + G[n][child]['length']
-
-                # reconnect
-                G.add_edge(parent, child, length=new_len)
-
-                # remove middle node
-                G.remove_node(n)
-                more_to_cut = True
-                break
-
-    return G
 
 def children_active(children, active_nodes):
     
@@ -411,11 +330,13 @@ def TMD(G, root):
                     
                     if child != Cm:
                         coord_pairs.append((v(G, child), f(G, parent)))
+                        # coord_pairs.append((f(G, parent), v(G, child)))
                 
-                G.nodes[parent]['f'] = v(G, Cm)
+                G.nodes[parent]["f"] = v(G, Cm)
                 
     coord_pairs.append((v(G, root), f(G, root)))
-    
+    # coord_pairs.append((f(G, root), v(G, root)))
+
     return coord_pairs
 
 is_right = True
@@ -424,25 +345,25 @@ fly = 1
 
 while fly < 29:
         
-    # side = "R" if is_right else "L"
-    side = "L"
+    side = "R" if is_right else "L"
+    # side = "L"
             
-    G, cut_G = TFG(f"data/traces_L3/{fly}_Tr9{side}.traces")     
+    G, cut_G = TFG(f"data/traces_L3/{fly}_Tr9{side}.traces")    
     coords = TMD(G, min(list(cut_G.nodes())))
-        
+            
     # y axis is in increasing length of strand for persistence barcode
     TMD_coords = sort_persistence_pairs(coords)
             
     # the upper left hand drawing will reflect L/R
-    # the coordinates will be only the 'reflected to face the right' versions
     show_data(G, cut_G, TMD_coords, fly, side)
     
     if not is_right: # if we are at left, now we can uptick, since we need fly = 1 for R and L
         fly += 1
-    
+            
     is_right = not is_right
                 
-    break
+    if fly == 3:
+        break
 
 
 
