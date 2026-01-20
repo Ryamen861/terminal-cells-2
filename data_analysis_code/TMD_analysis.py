@@ -148,12 +148,6 @@ def TFG(filename):
     special_zs = []
     
     R_radius = None
-
-    G = nx.DiGraph() # make this a directed graph
-    node_count = 1
-    
-    # if the following for loop turns out to be wrong, copy code from previuos commit
-    
     nodes = []  # list of dict(node_id, coords, radius, path_id, is_first)
     
     node_count = 1
@@ -299,7 +293,7 @@ def TMD(G, root):
     coord_pairs = []
     
     active_nodes = [node for node in G if G.degree(node) == 1 and node != root]
-        
+            
     # for each leaf, give it v(l) = f(l)
     fls = [f(G, n) for n in active_nodes]
     fl_attributes = dict(zip(active_nodes, fls))
@@ -315,12 +309,15 @@ def TMD(G, root):
     while root not in active_nodes:
         for leaf in active_nodes:
             
-            # print(f"We are at leaf {leaf}")
+            print(f"We are at leaf {leaf}")
             
             parent = list(G.predecessors(leaf))[0]
             children = list(G.successors(parent))
+            print(f"children {children}")
             
+            print(children_active(children, active_nodes))
             if children_active(children, active_nodes):
+
                 Cm = find_Cm(G, children)
                 
                 active_nodes.append(parent)
@@ -339,6 +336,7 @@ def TMD(G, root):
 
     return coord_pairs
 
+#%%
 is_right = True
 
 fly = 1
@@ -349,7 +347,7 @@ while fly < 29:
     # side = "L"
             
     G, cut_G = TFG(f"data/traces_L3/{fly}_Tr9{side}.traces")    
-    coords = TMD(G, min(list(cut_G.nodes())))
+    coords = TMD(cut_G, min(list(cut_G.nodes())))
             
     # y axis is in increasing length of strand for persistence barcode
     TMD_coords = sort_persistence_pairs(coords)
@@ -364,15 +362,6 @@ while fly < 29:
                 
     if fly == 3:
         break
-
-
-
-
-
-
-
-
-
 
 
 

@@ -8,3 +8,5 @@ It implements (somewhat):
 - Self Avoidance
 - A vector field to simulate Bnl gradient was attempted
 - TMD algorithm analysis of traced tracheal cells
+
+- Dragonfly files are from Peng on Neuromorph, with research on https://www.pnas.org/doi/full/10.1073/pnas.1210489109
