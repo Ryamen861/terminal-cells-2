@@ -37,8 +37,8 @@ def sort_persistence_pairs(coords):
     2) increasing coordinate magnitude
     """
     
-    for coord in coords:
-        print(coord[1] - coord[0]) # confused by negative/positive lifetimes
+    # for coord in coords:
+    #     print(coord[1] - coord[0]) # confused by negative/positive lifetimes
     
     return sorted(coords, key=lambda x: (abs(x[1] - x[0]), x[0] + x[1]))
 
@@ -107,7 +107,7 @@ def show_data(G, cut_G, TMD_coords, fly, side):
     ax3.axis(give_axes(TMD_coords, barcode=True))
     ax3.axis("on")
     ax3.set_xlabel("Lifetime (distance from root)")
-    ax3.set_ylabel("Length of Lifetime")
+    ax3.set_ylabel("Length")
     ax3.grid()
 
     for index in range(len(TMD_coords)):
@@ -293,7 +293,7 @@ def TMD(G, root):
     coord_pairs = []
     
     active_nodes = [node for node in G if G.degree(node) == 1 and node != root]
-            
+    
     # for each leaf, give it v(l) = f(l)
     fls = [f(G, n) for n in active_nodes]
     fl_attributes = dict(zip(active_nodes, fls))
@@ -309,13 +309,11 @@ def TMD(G, root):
     while root not in active_nodes:
         for leaf in active_nodes:
             
-            print(f"We are at leaf {leaf}")
+            # print(f"We are at leaf {leaf}")
             
             parent = list(G.predecessors(leaf))[0]
             children = list(G.successors(parent))
-            print(f"children {children}")
             
-            print(children_active(children, active_nodes))
             if children_active(children, active_nodes):
 
                 Cm = find_Cm(G, children)
@@ -337,33 +335,41 @@ def TMD(G, root):
     return coord_pairs
 
 #%%
-is_right = True
 
-fly = 1
-
-while fly < 29:
-        
-    side = "R" if is_right else "L"
-    # side = "L"
-            
-    G, cut_G = TFG(f"data/traces_L3/{fly}_Tr9{side}.traces")    
-    coords = TMD(cut_G, min(list(cut_G.nodes())))
-            
-    # y axis is in increasing length of strand for persistence barcode
-    TMD_coords = sort_persistence_pairs(coords)
-            
-    # the upper left hand drawing will reflect L/R
-    show_data(G, cut_G, TMD_coords, fly, side)
+def TMD_flies():
+    is_right = True
     
-    if not is_right: # if we are at left, now we can uptick, since we need fly = 1 for R and L
-        fly += 1
+    fly = 1
+    
+    barcodes = []
+    
+    while fly < 29:
             
-    is_right = not is_right
+        side = "R" if is_right else "L"
+        # side = "L"
                 
-    if fly == 3:
-        break
-
-
+        G, cut_G = TFG(f"data/traces_L3/{fly}_Tr9{side}.traces")    
+        coords = TMD(cut_G, min(list(cut_G.nodes())))
+                
+        # y axis is in increasing length of strand for persistence barcode
+        TMD_coords = sort_persistence_pairs(coords)
+                
+        # the upper left hand drawing will reflect L/R
+        show_data(G, cut_G, TMD_coords, fly, side)
+        
+        barcodes.append({f"{fly}_Tr9{side}": TMD_coords})
+        
+        if not is_right: # if we are at left, now we can uptick, since we need fly = 1 for R and L
+            fly += 1
+                
+        is_right = not is_right
+        
+        # write a few lines storing these as csv files
+        
+        if fly == 3:
+            break
+    
+    return barcodes
 
 #%% Testing
 
