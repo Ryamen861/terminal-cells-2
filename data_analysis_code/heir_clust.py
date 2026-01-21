@@ -8,6 +8,7 @@ Created on Wed Jan 21 12:39:52 2026
 
 from itertools import combinations
 import numpy as np
+import networkx as nx
 from TMD_analysis import TMD_flies
 
 
@@ -62,6 +63,10 @@ def find_dbar(D1, D2):
     D2_hist = make_hist(D2, max_len)
         
     return np.sum(abs(D1_hist - D2_hist))
+
+
+def metric_func(D1, D2):
+    return np.sum(abs(D1 - D2))
 
 # unsure about following implementation of bottleneck distance
 def point_dist(p, q):
@@ -149,15 +154,70 @@ def find_db(D1, D2):
 barcodes = TMD_flies()
 # barcodes is a list of dict(file_name: TMD_coords)
 
+distances = {}
+
+k = nx.Graph()
 
 combos = combinations(barcodes, 2)
 
-for D1_dict, D2_dict in combos:
+for combo in combos:
+    # grab a random combo, take the two diagrams out of it
+    D1_dict, D2_dict = combo
+    
+    # get the fly name and actual coords/diagram (D1 or D2) out of it
     fly1_name, D1 = list(D1_dict.items())[0]
     fly2_name, D2 = list(D2_dict.items())[0]
 
+    # compute the metric
     new_dbar = find_dbar(D1, D2)
     
+    print(fly1_name, fly2_name, new_dbar)
+    
+    # embed metric in graph
+    k.add_nodes_from([fly1_name, fly2_name])
+    k.add_edge(fly1_name, fly2_name, distance=new_dbar)
     
     
+goal_num_edges = len(list(k.nodes())) - 1
+curr_num_edges = len(list(k.edges()))
     
+num_to_cut = curr_num_edges - goal_num_edges
+
+edges = sorted(list(k.edges(data=True)), key=lambda x: x[-1]["distance"], reverse=True)
+
+for _ in range(num_to_cut):
+    removing_edge = edges[0]
+    edges.pop(0)
+    
+    k.remove_edge(removing_edge[0], removing_edge[1])
+    
+# can manually check
+# print(k.nodes)
+# print(k.edges(data=True))
+    
+
+# we should now be left with one number line that contains all fly names (L and R) as nodes
+# and their distances as weights on the edges
+# now, we are ready to perform heirarchical clustering
+
+
+#%%
+from scipy.cluster.hierarchy import dendrogram, linkage
+from matplotlib import pyplot as plt
+
+barcodes = TMD_flies()
+# barcodes is a list of dict(file_name: TMD_coords)
+
+X = [list(list(barcode.values())[0]) for barcode in barcodes]
+
+for i in X:
+    print(i)
+    print("\n")
+
+Z = linkage(X, metric=find_dbar)
+
+dn = dendrogram(Z)
+plt.show()
+
+
+
