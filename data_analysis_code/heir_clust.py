@@ -11,6 +11,7 @@ import numpy as np
 import networkx as nx
 from TMD_analysis import TMD_flies
 import matplotlib.pyplot as plt
+import itertools
 
 
 def make_hist(diagram, size):
@@ -144,7 +145,6 @@ def find_db(D1, D2):
     return ans
 
 
-
 #%%
 
 
@@ -157,6 +157,7 @@ k = nx.Graph()
 
 combos = combinations(barcodes, 2)
 
+counter = 0
 for combo in combos:
     # grab a random combo, take the two diagrams out of it
     D1_dict, D2_dict = combo
@@ -173,24 +174,6 @@ for combo in combos:
     k.add_node(fly2_name)
     
     k.add_edge(fly1_name, fly2_name, distance=new_dbar)
-    
-    
-goal_num_edges = len(list(k.nodes())) - 1
-curr_num_edges = len(list(k.edges()))
-    
-num_to_cut = curr_num_edges - goal_num_edges
-
-edges = sorted(list(k.edges(data=True)), key=lambda x: x[-1]["distance"], reverse=True)
-
-for _ in range(num_to_cut):
-    removing_edge = edges[0]
-    edges.pop(0)
-    
-    k.remove_edge(removing_edge[0], removing_edge[1])
-    
-# can manually check
-# print(k.nodes)
-# print(k.edges(data=True))
 
 # we should now be left with one number line that contains all fly names (L and R) as nodes
 # and their distances as weights on the edges
@@ -201,19 +184,23 @@ from scipy.spatial.distance import squareform
 
 nodes_list = list(k.nodes)
 
-matrix = nx.to_numpy_array(k, nodelist=nodes_list, weight="distance")
+matrix = nx.to_numpy_array(k, nodelist=nodes_list, weight="distance") 
 
 linkage_methods = ["complete", "ward", "average"]
 
 for method in linkage_methods:
     Z = linkage(squareform(matrix), method=method)
 
-    dn = dendrogram(Z, orientation='right', labels=nodes_list)
-        
+    # dn = dendrogram(Z, orientation='right', labels=nodes_list, truncate_mode='lastp', p=10)
+    dn = dendrogram(Z, orientation='right', labels=nodes_list, leaf_font_size=3, distance_sort=True)
+    
+    
     plt.ylabel("Terminal Cell ID")
     plt.xlabel("Clusters")
     plt.title(f"Heirarchical Clusterings: {method}")
-            
+
+    plt.savefig(f'TMD_data/clustering_{method}.png', dpi=300)
+        
     plt.show()
 
 

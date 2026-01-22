@@ -108,7 +108,7 @@ def show_data(G, cut_G, TMD_coords, fly, side):
     ax3.axis(give_axes(TMD_coords, barcode=True))
     ax3.axis("on")
     ax3.set_xlabel("Lifetime (distance from root)")
-    ax3.set_ylabel("Length")
+    ax3.set_ylabel("Index")
     ax3.grid()
 
     for index in range(len(TMD_coords)):
