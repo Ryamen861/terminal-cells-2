@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import random
 import copy
+import json
 
 def give_axes(coords, barcode=False):
     
@@ -336,6 +337,8 @@ def TMD(G, root):
 
 #%%
 
+save_files = False
+
 def TMD_flies():
     is_right = True
     
@@ -343,32 +346,44 @@ def TMD_flies():
     
     barcodes = []
     
-    while fly < 29:
+    if save_files:
+        while fly < 29:
+            side = "R" if is_right else "L"
+            # side = "L"
+                    
+            G, cut_G = TFG(f"data/traces_L3/{fly}_Tr9{side}.traces")    
+            coords = TMD(cut_G, min(list(cut_G.nodes())))
+                    
+            # y axis is in increasing length of strand for persistence barcode
+            TMD_coords = sort_persistence_pairs(coords)
+                    
+            # the upper left hand drawing will reflect L/R
+            show_data(G, cut_G, TMD_coords, fly, side)
             
-        side = "R" if is_right else "L"
-        # side = "L"
-                
-        G, cut_G = TFG(f"data/traces_L3/{fly}_Tr9{side}.traces")    
-        coords = TMD(cut_G, min(list(cut_G.nodes())))
-                
-        # y axis is in increasing length of strand for persistence barcode
-        TMD_coords = sort_persistence_pairs(coords)
-                
-        # the upper left hand drawing will reflect L/R
-        show_data(G, cut_G, TMD_coords, fly, side)
+            barcodes.append({f"{fly}_{side}": TMD_coords})
+            
+            if not is_right: # if we are at left, now we can uptick, since we need fly = 1 for R and L
+                fly += 1
+                    
+            is_right = not is_right
+            
+            # write a few lines storing these as JSON
+            
+            # if fly == 3:
+            #     break
         
-        barcodes.append({f"{fly}_Tr9{side}": TMD_coords})
+        with open("TMD_flies.json", "w") as file:
+            data = {}
+            for barcode in barcodes:
+                for k, v in barcode.items():
+                    data[k] = v
+            json.dump(data, file, indent=2)
+    else:
         
-        if not is_right: # if we are at left, now we can uptick, since we need fly = 1 for R and L
-            fly += 1
-                
-        is_right = not is_right
-        
-        # write a few lines storing these as csv files
-        
-        if fly == 3:
-            break
-    
+        with open("TMD_flies.json") as file:
+            data = json.load(file)
+            for k, v in data.items():
+                barcodes.append({k: v})
     return barcodes
 
 #%% Testing

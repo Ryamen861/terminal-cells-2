@@ -10,6 +10,7 @@ from itertools import combinations
 import numpy as np
 import networkx as nx
 from TMD_analysis import TMD_flies
+import matplotlib.pyplot as plt
 
 
 def make_hist(diagram, size):
@@ -18,7 +19,7 @@ def make_hist(diagram, size):
     
     
     This histogram represents the number of bars alive at a given point (looking at the barcode diagram)'''
-    
+        
     new_hist = np.array([])
     
     x = 1 # this is the x value (this is what is meant by at a given point)
@@ -63,10 +64,6 @@ def find_dbar(D1, D2):
     D2_hist = make_hist(D2, max_len)
         
     return np.sum(abs(D1_hist - D2_hist))
-
-
-def metric_func(D1, D2):
-    return np.sum(abs(D1 - D2))
 
 # unsure about following implementation of bottleneck distance
 def point_dist(p, q):
@@ -148,7 +145,7 @@ def find_db(D1, D2):
 
 
 
-
+#%%
 
 
 barcodes = TMD_flies()
@@ -170,11 +167,11 @@ for combo in combos:
 
     # compute the metric
     new_dbar = find_dbar(D1, D2)
-    
-    print(fly1_name, fly2_name, new_dbar)
-    
+        
     # embed metric in graph
-    k.add_nodes_from([fly1_name, fly2_name])
+    k.add_node(fly1_name)
+    k.add_node(fly2_name)
+    
     k.add_edge(fly1_name, fly2_name, distance=new_dbar)
     
     
@@ -194,30 +191,32 @@ for _ in range(num_to_cut):
 # can manually check
 # print(k.nodes)
 # print(k.edges(data=True))
-    
 
 # we should now be left with one number line that contains all fly names (L and R) as nodes
 # and their distances as weights on the edges
 # now, we are ready to perform heirarchical clustering
 
+from scipy.cluster.hierarchy import linkage, dendrogram
+from scipy.spatial.distance import squareform
 
-#%%
-from scipy.cluster.hierarchy import dendrogram, linkage
-from matplotlib import pyplot as plt
+nodes_list = list(k.nodes)
 
-barcodes = TMD_flies()
-# barcodes is a list of dict(file_name: TMD_coords)
+matrix = nx.to_numpy_array(k, nodelist=nodes_list, weight="distance")
 
-X = [list(list(barcode.values())[0]) for barcode in barcodes]
+linkage_methods = ["complete", "ward", "average"]
 
-for i in X:
-    print(i)
-    print("\n")
+for method in linkage_methods:
+    Z = linkage(squareform(matrix), method=method)
 
-Z = linkage(X, metric=find_dbar)
+    dn = dendrogram(Z, orientation='right', labels=nodes_list)
+        
+    plt.ylabel("Terminal Cell ID")
+    plt.xlabel("Clusters")
+    plt.title(f"Heirarchical Clusterings: {method}")
+            
+    plt.show()
 
-dn = dendrogram(Z)
-plt.show()
+
 
 
 
