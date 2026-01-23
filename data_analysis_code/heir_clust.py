@@ -11,8 +11,6 @@ import numpy as np
 import networkx as nx
 from TMD_analysis import TMD_flies
 import matplotlib.pyplot as plt
-import itertools
-
 
 def make_hist(diagram, size):
     '''Takes in a diagram, which is just a set of TMD coords, and returns a quasi-histogram.
@@ -64,7 +62,7 @@ def find_dbar(D1, D2):
     D1_hist = make_hist(D1, max_len)
     D2_hist = make_hist(D2, max_len)
         
-    return np.sum(abs(D1_hist - D2_hist))
+    return np.sum((D1_hist - D2_hist) ** 2)
 
 # unsure about following implementation of bottleneck distance
 def point_dist(p, q):
@@ -146,9 +144,9 @@ def find_db(D1, D2):
 
 
 #%%
-
-
-barcodes = TMD_flies()
+barcodes = TMD_flies(stages=["L1", "L3"], trace_type="time")
+# barcodes = TMD_flies(stages=["L3"], trace_type="time")
+# barcodes = TMD_flies(stages=["Zip", "Sqh", "Ctrl"], trace_type="phen")
 # barcodes is a list of dict(file_name: TMD_coords)
 
 distances = {}
@@ -199,8 +197,9 @@ for method in linkage_methods:
     plt.xlabel("Clusters")
     plt.title(f"Heirarchical Clusterings: {method}")
 
-    plt.savefig(f'TMD_data/clustering_{method}.png', dpi=300)
-        
+    plt.savefig(f'TMD_data/clustering_{method}_fas_rel_dens_L1L3.png', dpi=500)
+    
+    plt.figure(figsize=(30, 5))
     plt.show()
 
 

@@ -1,0 +1,258 @@
+# Standardization file for C201.swc created with StdSwc version 1.31 on 4/29/13.
+# Edited SWC file saved as C201.swc.CNG.swc.  See StdSwc1.31.doc for more information.
+#
+# code   irregularity_description. (action taken)
+#     irregularity_type     coordinates
+#
+2.2  Line 1 is of type 2.  (no action taken)
+     B1      X, Y, Z:  0.0  0.0  0.0
+4.5  Radius of terminal line 12 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  2.89  -25.96  -2.51
+4.5  Radius of terminal line 65 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -18.22  3.46  -7.86
+4.5  Radius of terminal line 98 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  40.51  -5.05  -12.96
+4.5  Radius of terminal line 103 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  27.9  8.1  -44.07
+4.3  Radius of line 171 at 1.501 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  45.99  184.07  -61.84
+4.3  Radius of line 182 at 1.853 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  33.82  206.59  -62.43
+4.3  Radius of line 263 at 1.854 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  40.29  343.02  -9.07
+4.5  Radius of terminal line 269 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  41.17  336.69  0.73
+4.5  Radius of terminal line 271 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  34.82  343.95  -4.73
+4.5  Radius of terminal line 282 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  58.2  323.83  -9.92
+4.5  Radius of terminal line 290 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  50.79  353.0  -11.82
+4.5  Radius of terminal line 300 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  47.83  332.82  -5.71
+4.5  Radius of terminal line 332 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  49.22  309.94  -41.22
+4.5  Radius of terminal line 337 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  54.66  317.42  -34.57
+4.5  Radius of terminal line 362 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  10.86  281.53  -15.25
+4.5  Radius of terminal line 365 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  44.83  295.01  -11.23
+4.5  Radius of terminal line 374 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  48.79  293.95  -10.84
+4.5  Radius of terminal line 378 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  53.79  286.91  -11.54
+4.5  Radius of terminal line 386 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  66.36  277.96  -17.53
+4.5  Radius of terminal line 390 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  35.5  306.59  -13.52
+4.5  Radius of terminal line 398 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  30.62  313.04  -19.77
+4.5  Radius of terminal line 403 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  54.04  294.26  -22.35
+4.5  Radius of terminal line 414 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  87.6  308.24  -33.45
+4.5  Radius of terminal line 417 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  92.17  311.41  -34.14
+4.5  Radius of terminal line 421 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  91.71  304.85  -36.98
+4.5  Radius of terminal line 427 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  68.78  288.01  -19.98
+4.5  Radius of terminal line 431 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  71.35  284.17  -25.86
+4.5  Radius of terminal line 435 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  74.07  278.49  -27.42
+4.5  Radius of terminal line 436 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  59.8  313.04  -17.13
+4.5  Radius of terminal line 457 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  10.19  323.16  -2.96
+4.5  Radius of terminal line 460 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  20.86  322.23  -8.9
+4.5  Radius of terminal line 471 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  6.76  312.27  -16.82
+4.5  Radius of terminal line 479 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -5.49  306.53  -9.16
+4.5  Radius of terminal line 490 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  13.93  303.11  -3.19
+4.5  Radius of terminal line 492 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  19.96  299.06  -3.68
+4.5  Radius of terminal line 503 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -1.21  287.64  -14.33
+4.5  Radius of terminal line 518 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -6.43  290.4  -15.92
+4.5  Radius of terminal line 543 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -25.37  361.62  -3.52
+4.5  Radius of terminal line 545 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -3.28  352.0  -23.61
+4.5  Radius of terminal line 550 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  9.82  354.54  -14.1
+4.5  Radius of terminal line 589 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -39.78  288.28  -20.41
+4.5  Radius of terminal line 597 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -25.0  271.39  -29.43
+4.5  Radius of terminal line 603 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -42.04  268.62  -30.31
+4.5  Radius of terminal line 605 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -37.76  267.65  -32.91
+4.5  Radius of terminal line 624 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -26.72  285.45  -30.18
+4.5  Radius of terminal line 630 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -19.29  289.46  -33.29
+4.5  Radius of terminal line 634 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -13.01  295.87  -31.68
+4.5  Radius of terminal line 644 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -24.32  275.58  -35.26
+4.5  Radius of terminal line 666 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -64.58  265.38  -45.88
+4.5  Radius of terminal line 668 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -69.91  266.66  -52.44
+4.5  Radius of terminal line 678 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -24.13  277.93  -46.23
+4.5  Radius of terminal line 689 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -48.06  304.86  -34.85
+4.5  Radius of terminal line 705 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -49.79  317.91  -35.64
+4.5  Radius of terminal line 711 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -64.39  322.52  -49.11
+4.5  Radius of terminal line 722 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -27.8  327.58  -33.01
+4.5  Radius of terminal line 727 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -13.44  319.53  -36.77
+4.5  Radius of terminal line 729 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -2.73  340.9  -20.88
+4.5  Radius of terminal line 735 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  17.41  351.33  -11.15
+4.5  Radius of terminal line 740 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  20.6  350.65  -2.68
+4.5  Radius of terminal line 757 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  26.44  368.25  -4.29
+4.3  Radius of line 768 at 1.489 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  43.75  386.36  -35.67
+4.5  Radius of terminal line 776 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  40.3  400.72  -29.55
+4.5  Radius of terminal line 778 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  48.48  311.02  -43.55
+4.5  Radius of terminal line 789 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  33.63  285.12  -78.8
+4.5  Radius of terminal line 820 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  8.1  264.71  -20.09
+4.5  Radius of terminal line 828 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  52.06  273.07  -16.18
+4.5  Radius of terminal line 839 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  66.74  279.37  -30.52
+4.5  Radius of terminal line 854 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  90.13  250.23  -42.73
+4.5  Radius of terminal line 867 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  43.94  259.2  -17.47
+4.5  Radius of terminal line 868 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  50.27  263.2  -19.69
+4.5  Radius of terminal line 869 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  52.66  274.55  -31.16
+4.5  Radius of terminal line 885 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  2.06  251.85  -39.14
+4.5  Radius of terminal line 919 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  5.12  246.82  -22.97
+4.5  Radius of terminal line 935 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -3.55  229.41  -38.52
+4.5  Radius of terminal line 956 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -45.76  241.17  -46.65
+4.5  Radius of terminal line 959 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -49.13  239.42  -53.1
+4.5  Radius of terminal line 962 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -17.39  227.66  -41.04
+4.5  Radius of terminal line 973 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -16.37  249.87  -33.25
+4.5  Radius of terminal line 982 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  47.96  222.22  -33.49
+4.5  Radius of terminal line 987 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  42.43  214.66  -34.22
+4.5  Radius of terminal line 993 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  39.54  236.87  -25.68
+4.5  Radius of terminal line 1000 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  47.25  158.63  -44.72
+4.5  Radius of terminal line 1001 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  46.66  159.49  -46.12
+4.5  Radius of terminal line 1019 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  54.59  129.7  -15.74
+4.5  Radius of terminal line 1027 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  64.89  144.61  -15.67
+4.5  Radius of terminal line 1052 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  27.83  121.79  -7.8
+4.5  Radius of terminal line 1069 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  11.42  118.96  -23.79
+4.5  Radius of terminal line 1092 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -37.92  147.55  -27.24
+4.5  Radius of terminal line 1100 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -33.44  157.1  -42.69
+4.5  Radius of terminal line 1125 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -23.9  111.51  -14.39
+4.5  Radius of terminal line 1152 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -63.21  94.66  -30.3
+4.5  Radius of terminal line 1182 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -48.89  63.31  -23.09
+4.5  Radius of terminal line 1189 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -15.1  89.04  -33.37
+4.5  Radius of terminal line 1194 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -27.35  98.27  -26.63
+4.5  Radius of terminal line 1199 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -25.0  91.4  -16.89
+4.5  Radius of terminal line 1224 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  61.3  85.85  -15.98
+4.5  Radius of terminal line 1228 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  49.39  88.03  -17.18
+4.5  Radius of terminal line 1232 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  63.04  87.05  -22.8
+4.5  Radius of terminal line 1238 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  62.02  103.0  -20.4
+4.5  Radius of terminal line 1243 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  67.09  97.28  -31.11
+4.5  Radius of terminal line 1245 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  55.24  109.13  -21.94
+4.5  Radius of terminal line 1248 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  47.08  101.22  -22.04
+4.5  Radius of terminal line 1257 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  70.42  118.25  -31.11
+4.5  Radius of terminal line 1270 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  91.16  98.79  -37.86
+4.5  Radius of terminal line 1283 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  60.43  82.09  -27.11
+4.5  Radius of terminal line 1299 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  72.41  69.11  -28.4
+4.5  Radius of terminal line 1300 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  45.88  87.54  -31.65
+4.5  Radius of terminal line 1305 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  30.76  79.62  -28.85
+4.5  Radius of terminal line 1313 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  44.32  80.11  -17.96
+4.5  Radius of terminal line 1329 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -1.65  77.73  -20.9
+4.5  Radius of terminal line 1335 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  5.68  92.68  -21.66
+4.5  Radius of terminal line 1340 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  16.18  93.32  -23.32
+4.5  Radius of terminal line 1347 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  25.53  74.18  -15.13
+4.5  Radius of terminal line 1349 at 1.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  0.89  27.47  -8.15
+2.5  Seg length ending at pt. 1214 <= 0.1 at 0.02.  (removed)
+     A       X, Y, Z:  53.51  104.23  -25.29
+2.7  Line 471 of rad 1.0 is an included side branch.  (removed)
+     A      X, Y, Z:  6.76  312.27  -16.82
+2.7  Line 735 of rad 1.0 is an included side branch.  (removed)
+     A      X, Y, Z:  17.41  351.33  -11.15
+2.7  Line 935 of rad 1.0 is an included side branch.  (removed)
+     A      X, Y, Z:  -3.55  229.41  -38.52
+2.7  Line 1000 of rad 1.0 is an included side branch.  (removed)
+     A      X, Y, Z:  47.25  158.63  -44.72
+2.7  Line 1194 of rad 1.0 is an included side branch.  (removed)
+     A      X, Y, Z:  -27.35  98.27  -26.63
+2.7  Line 1305 of rad 1.0 is an included side branch.  (removed)
+     A      X, Y, Z:  30.76  79.62  -28.85
+ 
+ 
+
+
+Number of type A irregularities = 7
+Number of type B1 irregularities = 115
+Number of type B2 irregularities = 0
+Number of type C irregularities = 0

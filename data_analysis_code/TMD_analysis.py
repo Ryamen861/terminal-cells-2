@@ -9,6 +9,7 @@ import seaborn as sns
 import random
 import copy
 import json
+import scipy.spatial as spatial
 
 def give_axes(coords, barcode=False):
     
@@ -30,7 +31,7 @@ def give_axes(coords, barcode=False):
             
             
         return [0, max_num + 50, 0, max_num + 50]
-
+    
 def sort_persistence_pairs(coords):
     """
     Sorts (birth, death) pairs by:
@@ -80,9 +81,9 @@ def draw_G(G, ax, title=""):
     ax.set_title(f"{title}")
     ax.axis('off')
 
-def show_data(G, cut_G, TMD_coords, fly, side):
+def show_data(G, cut_G, TMD_coords, fly, side, stage):
 
-    savename = f"TMD_data/image_{fly}_{side}"
+    savename = f"TMD_data/{stage}_image_{fly}_{side}"
     fig, axs = plt.subplots(2, 2)
     
     ax1 = axs[0, 0]
@@ -262,7 +263,13 @@ def f(G, n):
     # clarification: the following line is correct, we do not need to recalculate
     # the radius to the root of G, since f is the radial distance from root R,
     # so we use the radius from the original graph
+    
+    
     return nx.get_node_attributes(G, "radius")[n]
+    
+    # point_tree = spatial.cKDTree(list(nx.get_node_attributes(G, 'coords').values()))
+    # neibs = point_tree.query_ball_point(G.nodes[n]['coords'], 5)
+    # return len(neibs)
 
 def v(G, source):
     subtree = nx.dfs_tree(G, source=source)
@@ -310,7 +317,7 @@ def TMD(G, root):
     while root not in active_nodes:
         for leaf in active_nodes:
             
-            # print(f"We are at leaf {leaf}")
+            print(f"We are at leaf {leaf}")
             
             parent = list(G.predecessors(leaf))[0]
             children = list(G.successors(parent))
@@ -326,64 +333,87 @@ def TMD(G, root):
                     
                     if child != Cm:
                         coord_pairs.append((v(G, child), f(G, parent)))
+                        
+                        # # since radial distance increases outward, we will switch it up to make it
+                        # # (smaller value, bigger value)
                         # coord_pairs.append((f(G, parent), v(G, child)))
                 
                 G.nodes[parent]["f"] = v(G, Cm)
                 
     coord_pairs.append((v(G, root), f(G, root)))
+    
+    # # same switcharoo logic as inside the 'if child != Cm:" statement
     # coord_pairs.append((f(G, root), v(G, root)))
 
     return coord_pairs
 
 #%%
 
-save_files = False
+save_files = True
 
-def TMD_flies():
-    is_right = True
+def TMD_flies(stages: list, trace_type=None):
     
-    fly = 1
+    """trace_type should be either 'time' or 'phen' (independent variable is phenotype or time)"""
     
     barcodes = []
     
     if save_files:
-        while fly < 29:
-            side = "R" if is_right else "L"
-            # side = "L"
-                    
-            G, cut_G = TFG(f"data/traces_L3/{fly}_Tr9{side}.traces")    
-            coords = TMD(cut_G, min(list(cut_G.nodes())))
-                    
-            # y axis is in increasing length of strand for persistence barcode
-            TMD_coords = sort_persistence_pairs(coords)
-                    
-            # the upper left hand drawing will reflect L/R
-            show_data(G, cut_G, TMD_coords, fly, side)
-            
-            barcodes.append({f"{fly}_{side}": TMD_coords})
-            
-            if not is_right: # if we are at left, now we can uptick, since we need fly = 1 for R and L
-                fly += 1
-                    
-            is_right = not is_right
-            
-            # write a few lines storing these as JSON
-            
-            # if fly == 3:
-            #     break
         
-        with open("TMD_flies.json", "w") as file:
-            data = {}
-            for barcode in barcodes:
-                for k, v in barcode.items():
-                    data[k] = v
-            json.dump(data, file, indent=2)
-    else:
+        stage_to_count = {
+                "L3": 28,
+                "L2": 27,
+                "L1": 26,
+                "Sqh": 21,
+                "Zip": 17,
+                "Ctrl": 6
+            }
         
-        with open("TMD_flies.json") as file:
-            data = json.load(file)
-            for k, v in data.items():
-                barcodes.append({k: v})
+        for stage in stages:
+            print(stage)
+            is_right = True
+            fly = 1
+            
+            for fly in range(1, stage_to_count[stage] + 1):
+                side = "R" if is_right else "L"
+                # side = "L"
+                
+                if trace_type == "time":
+                    filename = f"data/traces_{stage}/{fly}_Tr9{side}.traces"
+                elif trace_type == "phen":
+                    filename = f"data/{stage}_traces/{fly}_{side}.traces"
+                else:
+                    print("uh oh")
+                    
+                G, cut_G = TFG(filename=filename)    
+                coords = TMD(cut_G, min(list(cut_G.nodes())))
+                        
+                # y axis is in increasing length of strand for persistence barcode
+                TMD_coords = sort_persistence_pairs(coords)
+                        
+                # the upper left hand drawing will reflect L/R
+                show_data(G, cut_G, TMD_coords, fly, side, stage)
+                
+                barcodes.append({f"{stage}_{fly}_{side}_{trace_type}": TMD_coords})
+                
+                if not is_right: # if we are at left, now we can uptick, since we need fly = 1 for R and L
+                    fly += 1
+                        
+                is_right = not is_right
+                        
+            with open("TMD_flies.json", "w") as file:
+                data = {}
+                for barcode in barcodes:
+                    for k, v in barcode.items():
+                        data[k] = v
+                json.dump(data, file, indent=2)
+                
+        else:
+            
+            with open("TMD_flies.json") as file:
+                data = json.load(file)
+                for k, v in data.items():
+                    barcodes.append({k: v})
+                
     return barcodes
 
 #%% Testing
@@ -429,8 +459,10 @@ nx.set_node_attributes(k, dict(zip(list(k.nodes()), coords)), "coords")
 
 
 #%%
-TMD_coords = TMD(k, min(list(k.nodes())))
-show_data(k, k, TMD_coords, "test", "test")
+# TMD_coords = TMD(k, min(list(k.nodes())))
+# TMD_coords = sort_persistence_pairs(TMD_coords)
+
+# show_data(k, k, TMD_coords, fly="test", side="test", stage="test")
 
 
 

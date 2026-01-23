@@ -1,0 +1,120 @@
+# Standardization file for C160.swc created with StdSwc version 1.31 on 4/29/13.
+# Edited SWC file saved as C160.swc.CNG.swc.  See StdSwc1.31.doc for more information.
+#
+# code   irregularity_description. (action taken)
+#     irregularity_type     coordinates
+#
+2.2  Line 1 is of type 2.  (no action taken)
+     B1      X, Y, Z:  0.0  0.0  0.0
+4.3  Radius of line 576 at 5.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -18.62  258.19  -41.99
+4.3  Radius of line 588 at 5.188 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -12.65  288.63  -39.11
+4.3  Radius of line 589 at 5.722 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -12.7  289.88  -39.1
+4.3  Radius of line 590 at 6.361 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -12.78  292.01  -39.08
+4.3  Radius of line 591 at 7.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -12.88  294.57  -39.06
+4.3  Radius of line 592 at 7.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -12.9  295.21  -39.05
+4.3  Radius of line 593 at 7.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -12.93  295.85  -39.05
+4.5  Radius of terminal line 594 at 7.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -12.98  297.13  -39.04
+4.5  Radius of terminal line 595 at 6.361 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -12.86  294.13  -39.06
+4.3  Radius of line 596 at 6.25 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -12.98  298.13  -38.97
+4.3  Radius of line 907 at 6.776 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -13.2  297.06  -39.85
+4.3  Radius of line 908 at 6.075 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -15.46  297.01  -41.41
+4.3  Radius of line 909 at 5.23 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -17.8  296.93  -43.2
+4.5  Radius of terminal line 920 at 5.722 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -12.74  291.13  -39.09
+4.3  Radius of line 921 at 4.506 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -11.74  288.19  -38.53
+4.3  Radius of line 1008 at 5.136 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -12.78  288.29  -37.7
+4.3  Radius of line 1009 at 5.047 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -13.06  287.8  -34.77
+4.3  Radius of line 1010 at 5.002 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -13.38  287.75  -31.78
+4.3  Radius of line 1011 at 4.842 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -13.7  287.74  -28.8
+4.3  Radius of line 1012 at 4.751 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -15.44  289.48  -27.87
+2.5  Seg length ending at pt. 90 <= 0.1 at 0.0781.  (removed)
+     A       X, Y, Z:  -28.22  59.37  -23.19
+2.5  Seg length ending at pt. 346 <= 0.1 at 0.052.  (removed)
+     A       X, Y, Z:  -98.22  93.3  -30.75
+2.5  Seg length ending at pt. 459 <= 0.1 at 0.0548.  (removed)
+     A       X, Y, Z:  -42.19  132.25  -35.72
+2.5  Seg length ending at pt. 522 <= 0.1 at 0.0173.  (removed)
+     A       X, Y, Z:  -31.96  135.64  -40.05
+2.5  Seg length ending at pt. 584 <= 0.1 at 0.1.  (removed)
+     A       X, Y, Z:  -14.79  277.26  -40.5
+2.5  Seg length ending at pt. 758 <= 0.1 at 0.0648.  (removed)
+     A       X, Y, Z:  -28.24  353.69  -17.74
+2.5  Seg length ending at pt. 876 <= 0.1 at 0.0671.  (removed)
+     A       X, Y, Z:  6.5  311.49  -27.18
+2.5  Seg length ending at pt. 1101 <= 0.1 at 0.0469.  (removed)
+     A       X, Y, Z:  -91.63  298.51  -26.25
+2.5  Seg length ending at pt. 1139 <= 0.1 at 0.01.  (removed)
+     A       X, Y, Z:  -102.26  289.9  -33.29
+2.5  Seg length ending at pt. 1197 <= 0.1 at 0.0768.  (removed)
+     A       X, Y, Z:  -87.6  317.76  -28.79
+2.5  Seg length ending at pt. 1372 <= 0.1 at 0.0412.  (removed)
+     A       X, Y, Z:  -70.13  248.91  -30.77
+2.5  Seg length ending at pt. 1503 <= 0.1 at 0.0224.  (removed)
+     A       X, Y, Z:  -17.59  136.34  -48.41
+2.5  Seg length ending at pt. 1647 <= 0.1 at 0.0346.  (removed)
+     A       X, Y, Z:  -24.41  68.16  -20.34
+2.5  Seg length ending at pt. 1662 <= 0.1 at 0.0854.  (removed)
+     A       X, Y, Z:  -23.72  65.64  -11.48
+2.7  Line 218 of rad 1.0 is an included side branch.  (removed)
+     A      X, Y, Z:  -82.53  120.32  -32.23
+2.7  Line 284 of rad 1.0 is an included side branch.  (removed)
+     A      X, Y, Z:  -81.26  92.49  -30.19
+2.7  Line 324 of rad 1.0 is an included side branch.  (removed)
+     A      X, Y, Z:  -116.01  63.05  -30.61
+2.7  Line 594 of rad 7.0 is an included side branch.  (removed)
+     A      X, Y, Z:  -12.98  297.13  -39.04
+2.7  Line 631 of rad 1.0 is an included side branch.  (removed)
+     A      X, Y, Z:  -35.68  335.67  -23.03
+2.7  Line 734 of rad 1.0 is an included side branch.  (removed)
+     A      X, Y, Z:  -20.16  347.08  -18.13
+2.7  Line 920 of rad 5.722 is an included side branch.  (removed)
+     A      X, Y, Z:  -12.74  291.13  -39.09
+2.7  Line 950 of rad 1.0 is an included side branch.  (removed)
+     A      X, Y, Z:  18.56  277.4  -25.03
+2.7  Line 1073 of rad 2.707 is an included side branch.  (removed)
+     A      X, Y, Z:  -91.98  295.88  -21.11
+2.7  Line 1158 of rad 1.0 is an included side branch.  (removed)
+     A      X, Y, Z:  -95.68  307.82  -16.12
+4.4  Line 130 of rad 2.0 links to 129 of rad 1.0.  (no action taken)
+     B1      X, Y, Z:  -64.55  65.59  -17.22
+4.4  Line 196 of rad 2.0 links to 195 of rad 1.0.  (no action taken)
+     B1      X, Y, Z:  -42.14  132.23  -35.71
+4.4  Line 575 of rad 2.772 links to 574 of rad 1.0.  (no action taken)
+     B1      X, Y, Z:  -19.71  255.4  -42.23
+4.4  Line 587 of rad 2.976 links to 586 of rad 1.0.  (no action taken)
+     B1      X, Y, Z:  -13.28  285.74  -39.61
+4.4  Line 774 of rad 2.0 links to 773 of rad 1.0.  (no action taken)
+     B1      X, Y, Z:  -21.93  360.38  -25.98
+4.4  Line 1145 of rad 2.438 links to 1144 of rad 1.0.  (no action taken)
+     B1      X, Y, Z:  -80.92  307.17  -21.08
+4.4  Line 1206 of rad 2.0 links to 1205 of rad 1.0.  (no action taken)
+     B1      X, Y, Z:  -85.03  300.54  -39.84
+4.4  Line 1554 of rad 3.0 links to 1553 of rad 1.336.  (no action taken)
+     B1      X, Y, Z:  20.41  106.3  -43.9
+ 
+ 
+
+
+Number of type A irregularities = 24
+Number of type B1 irregularities = 29
+Number of type B2 irregularities = 0
+Number of type C irregularities = 0

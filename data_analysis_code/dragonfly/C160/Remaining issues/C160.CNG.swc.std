@@ -1,0 +1,65 @@
+# Standardization file for C160.CNG.swc created with StdSwc version 1.31 on 4/29/13.
+#
+# code   irregularity_description. (action taken)
+#     irregularity_type     coordinates
+#
+2.2  Line 1 is of type 2.  (no action taken)
+     B1      X, Y, Z:  0.0  0.0  0.0
+4.3  Radius of line 569 at 5.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -18.62  258.19  -41.99
+4.3  Radius of line 580 at 5.188 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -12.65  288.63  -39.11
+4.3  Radius of line 581 at 5.722 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -12.7  289.88  -39.1
+4.3  Radius of line 582 at 6.361 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -12.78  292.01  -39.08
+4.3  Radius of line 583 at 7.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -12.88  294.57  -39.06
+4.3  Radius of line 584 at 7.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -12.9  295.21  -39.05
+4.3  Radius of line 585 at 7.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -12.93  295.85  -39.05
+4.5  Radius of terminal line 586 at 6.361 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -12.86  294.13  -39.06
+4.3  Radius of line 587 at 6.25 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -12.98  298.13  -38.97
+4.3  Radius of line 894 at 6.776 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -13.2  297.06  -39.85
+4.3  Radius of line 895 at 6.075 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -15.46  297.01  -41.41
+4.3  Radius of line 896 at 5.23 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -17.8  296.93  -43.2
+4.3  Radius of line 897 at 4.415 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -18.5  295.38  -45.48
+4.3  Radius of line 907 at 4.506 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -11.74  288.19  -38.53
+4.3  Radius of line 993 at 5.136 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -12.78  288.29  -37.7
+4.3  Radius of line 994 at 5.047 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -13.06  287.8  -34.77
+4.3  Radius of line 995 at 5.002 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -13.38  287.75  -31.78
+4.3  Radius of line 996 at 4.842 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -13.7  287.74  -28.8
+4.3  Radius of line 997 at 4.751 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -15.44  289.48  -27.87
+4.5  Radius of terminal line 998 at 4.375 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -17.47  291.67  -28.14
+4.4  Line 129 of rad 2.0 links to 128 of rad 1.0.  (no action taken)
+     B1      X, Y, Z:  -64.55  65.59  -17.22
+4.4  Line 195 of rad 2.0 links to 194 of rad 1.0.  (no action taken)
+     B1      X, Y, Z:  -42.14  132.23  -35.71
+4.4  Line 568 of rad 2.772 links to 567 of rad 1.0.  (no action taken)
+     B1      X, Y, Z:  -19.71  255.4  -42.23
+4.4  Line 579 of rad 2.976 links to 578 of rad 1.0.  (no action taken)
+     B1      X, Y, Z:  -13.28  285.74  -39.61
+4.4  Line 762 of rad 2.0 links to 761 of rad 1.0.  (no action taken)
+     B1      X, Y, Z:  -21.93  360.38  -25.98
+4.4  Line 1127 of rad 2.438 links to 1126 of rad 1.0.  (no action taken)
+     B1      X, Y, Z:  -80.92  307.17  -21.08
+4.4  Line 1186 of rad 2.0 links to 1185 of rad 1.0.  (no action taken)
+     B1      X, Y, Z:  -85.03  300.54  -39.84
+4.4  Line 1532 of rad 3.0 links to 1531 of rad 1.336.  (no action taken)
+     B1      X, Y, Z:  20.41  106.3  -43.9
+ 
+ 

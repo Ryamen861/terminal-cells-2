@@ -1,0 +1,69 @@
+# Standardization file for C171.CNG.swc created with StdSwc version 1.31 on 4/29/13.
+#
+# code   irregularity_description. (action taken)
+#     irregularity_type     coordinates
+#
+2.2  Line 1 is of type 2.  (no action taken)
+     B1      X, Y, Z:  0.0  0.0  0.0
+4.3  Radius of line 84 at 1.853 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  14.86  54.14  -8.4
+4.5  Radius of terminal line 156 at 2.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  7.67  136.19  -47.46
+4.3  Radius of line 459 at 1.934 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  35.32  172.16  -21.13
+4.3  Radius of line 460 at 1.565 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  35.62  175.14  -21.34
+4.3  Radius of line 619 at 2.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  16.91  231.52  -26.44
+4.3  Radius of line 639 at 1.81 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  16.62  230.29  -26.64
+4.3  Radius of line 644 at 1.633 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  16.47  222.39  -37.69
+4.3  Radius of line 645 at 1.685 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  16.54  222.27  -40.68
+4.5  Radius of terminal line 646 at 2.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  17.27  222.0  -43.57
+4.3  Radius of line 755 at 1.611 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  2.16  324.8  -4.38
+4.3  Radius of line 756 at 2.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  1.08  326.05  -1.95
+4.3  Radius of line 757 at 1.787 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  0.64  326.24  -1.74
+4.3  Radius of line 818 at 1.82 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -23.34  309.86  -11.08
+4.3  Radius of line 884 at 2.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  18.56  349.65  -4.42
+4.3  Radius of line 972 at 2.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  57.11  283.71  -48.04
+4.3  Radius of line 973 at 1.767 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  57.34  283.83  -48.15
+4.3  Radius of line 974 at 1.767 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  57.46  283.9  -48.2
+4.3  Radius of line 975 at 1.669 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  58.15  282.79  -49.07
+4.3  Radius of line 1049 at 1.732 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  24.85  307.33  -16.18
+4.3  Radius of line 1089 at 1.811 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  10.01  294.42  -9.57
+4.3  Radius of line 1111 at 1.586 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  48.49  307.45  -26.57
+4.3  Radius of line 1162 at 2.0 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  21.44  353.67  -3.16
+4.3  Radius of line 1163 at 1.578 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  21.41  354.93  -3.09
+4.3  Radius of line 1192 at 1.587 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  27.49  377.36  -13.27
+4.3  Radius of line 1429 at 1.732 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -45.06  283.03  -41.09
+4.3  Radius of line 1484 at 1.689 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  -43.83  266.68  -33.19
+4.3  Radius of line 1983 at 1.901 >= 5.0 stdevs above the mean.  (no action taken)
+     B1      X, Y, Z:  1.78  -30.14  -6.81
+4.4  Line 156 of rad 2.0 links to 155 of rad 1.0.  (no action taken)
+     B1      X, Y, Z:  7.67  136.19  -47.46
+4.4  Line 884 of rad 2.0 links to 883 of rad 1.0.  (no action taken)
+     B1      X, Y, Z:  18.56  349.65  -4.42
+4.4  Line 972 of rad 2.0 links to 971 of rad 1.0.  (no action taken)
+     B1      X, Y, Z:  57.11  283.71  -48.04
+ 
+ 
